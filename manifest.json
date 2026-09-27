@@ -1,0 +1,15 @@
+{
+  "name": "டிராக்டர் வேலை கணக்கீடு",
+  "short_name": "Tractor Calc",
+  "description": "டிராக்டர் வேலை நேரம், கூலி மற்றும் பில் தானாக உருவாக்கம்.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f6f3",
+  "theme_color": "#2f7d32",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
