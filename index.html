@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>டிராக்டர் வேலை கணக்கீடு</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f7d32">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f4f6f3; --card:#ffffff; --text:#1c2317; --muted:#6b7568;
+  --accent:#2f7d32; --accent-dark:#1f5722; --danger:#c1432a; --warn:#c98a12; --border:#dfe6db; --chip:#eef3ea;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12160f; --card:#1b2117; --text:#eef2ea; --muted:#9aa693;
+    --accent:#5cb85f; --accent-dark:#3f8a42; --danger:#e2725a; --warn:#e0a835; --border:#2b3325; --chip:#222b1c;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12160f; --card:#1b2117; --text:#eef2ea; --muted:#9aa693;
+  --accent:#5cb85f; --accent-dark:#3f8a42; --danger:#e2725a; --warn:#e0a835; --border:#2b3325; --chip:#222b1c;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;overflow-x:hidden;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+.wrap{max-width:480px;margin:0 auto;padding:12px 10px 82px;}
+h1{font-size:19px;margin:4px 0 2px;}
+.sub{color:var(--muted);font-size:13px;margin:0 0 16px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600;}
+input[type="number"], input[type="text"], input[type="date"], input[type="time"]{
+  width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);
+  background:var(--chip);color:var(--text);font-size:16px;margin-bottom:12px;
+}
+.namerow{display:flex;gap:8px;align-items:flex-start;}
+.namerow input{flex:1;}
+.quick-farmers{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px;}
+.quick-farmer-chip{padding:7px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--border);color:var(--text);font-size:11.5px;font-weight:700;white-space:nowrap;}
+.farmer-chip{display:inline-flex;align-items:center;gap:6px;}
+.farmer-chip button{background:transparent;border:none;padding:0;font-size:13px;color:var(--muted);cursor:pointer;line-height:1;}
+.farmer-chip button:hover{color:var(--text);}
+.farmer-chip button.remove:hover{color:#e5484d;}
+.quick-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0;}
+.quick-action{padding:12px 8px;border-radius:12px;background:linear-gradient(180deg, var(--card), var(--chip));border:1px solid var(--border);font-weight:800;font-size:12px;color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:68px;}
+.quick-action .qa-ic{font-size:20px;line-height:1;}
+.today-card{background:linear-gradient(180deg, rgba(47,125,50,.08), rgba(47,125,50,.02));border:1px solid rgba(47,125,50,.25);border-radius:12px;padding:12px;margin:8px 0 12px;}
+.today-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+.today-values{display:flex;justify-content:space-between;gap:8px;margin-top:8px;}
+.today-values .block{flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center;}
+.today-values .block small{display:block;color:var(--muted);font-size:10px;margin-bottom:3px;}
+.today-values .block strong{font-size:15px;color:var(--accent-dark);}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;}
+@media (max-width: 420px){
+  .wrap{padding:10px 8px 76px;}
+  .card{padding:12px 11px;}
+  .btnrow{flex-direction:column;}
+  .big{width:100%;}
+  .namerow{gap:6px;}
+  .manual-fields{grid-template-columns:1fr;}
+  .result h3{font-size:14px;}
+  .rowline{font-size:13px;}
+  .timer{font-size:32px;}
+}
+.mic{width:46px;height:46px;flex:0 0 46px;background:var(--chip);border:1px solid var(--border);font-size:18px;color:var(--text);}
+.mic.listening{background:var(--danger);color:#fff;}
+.tip{display:none;background:#fff6da;border:1.5px solid #e8c866;color:#5c4a12;border-radius:10px;
+  padding:11px 12px;font-size:13.5px;line-height:1.5;margin:-2px 0 12px;}
+.tip.show{display:block;}
+.voice-note-preview{display:none;align-items:center;gap:8px;background:var(--chip);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:-4px 0 12px;}
+.voice-note-preview audio{flex:1;min-width:0;max-width:100%;height:32px;}
+.voice-note-clear{flex:0 0 auto;background:transparent;color:var(--danger);font-weight:700;font-size:12px;padding:6px 4px;}
+@keyframes pulseField{
+  0%{box-shadow:0 0 0 0 rgba(47,125,50,.5);}
+  70%{box-shadow:0 0 0 8px rgba(47,125,50,0);}
+  100%{box-shadow:0 0 0 0 rgba(47,125,50,0);}
+}
+.pulseHighlight{animation:pulseField 1.1s ease-out 3; border-color:var(--accent) !important;}
+.timer{font-size:38px;font-weight:700;text-align:center;margin:10px 0;font-variant-numeric:tabular-nums;}
+.status{text-align:center;color:var(--muted);font-size:13px;margin-bottom:10px;}
+.btnrow{display:flex;gap:10px;}
+.big{flex:1;padding:15px;font-size:16px;font-weight:700;color:#fff;}
+.start{background:var(--accent);}
+.start:disabled{background:var(--chip);color:var(--muted);}
+.stop{background:var(--danger);}
+.stop:disabled{background:var(--chip);color:var(--muted);}
+.nextbtn{width:100%;padding:16px 18px;background:linear-gradient(180deg, #3ea75b 0%, #2f7d32 100%);color:#fff;font-weight:900;border:1px solid rgba(22,74,31,.35);margin-top:12px;display:none;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 16px rgba(47,125,50,.22);font-size:18px;letter-spacing:.02em;}
+.nextbtn:active{transform:translateY(1px);box-shadow:0 5px 10px rgba(47,125,50,.18);}
+.result{display:none;}
+.result h3{margin:0 0 8px;font-size:15px;}
+.rowline{display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px dashed var(--border);}
+.rowline b{font-weight:600;}
+.amount{font-size:22px;font-weight:800;color:var(--accent-dark);text-align:right;margin-top:8px;}
+.paytoggle{display:flex;gap:8px;margin-top:10px;}
+.paybtn{flex:1;padding:11px;font-weight:700;font-size:13.5px;border:1.5px solid var(--border);background:var(--chip);color:var(--text);}
+.paybtn.paid.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.paybtn.partial.active{background:var(--warn);border-color:var(--warn);color:#fff;}
+.paybtn.unpaid.active{background:var(--danger);border-color:var(--danger);color:#fff;}
+.partial-amount-row{display:none;align-items:center;gap:8px;margin:10px 0 0;}
+.partial-amount-row.show{display:flex;}
+.partial-amount-row label{flex:0 0 auto;font-size:12.5px;color:var(--muted);margin:0;}
+.partial-amount-row input{flex:1;min-width:0;margin:0;}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;margin-left:8px;}
+.badge.paid{background:rgba(47,125,50,.15);color:var(--accent-dark);}
+.badge.partial{background:rgba(201,138,18,.15);color:var(--warn);}
+.badge.unpaid{background:rgba(193,67,42,.15);color:var(--danger);}
+.pendingcard{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.pendingcard .p1{font-size:13px;color:var(--muted);}
+.pendingcard .p2{font-size:19px;font-weight:800;color:var(--danger);}
+.dues-group{cursor:default;}
+.dues-detail{margin:-6px 0 10px;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.dues-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 11px;border-bottom:1px dashed var(--border);font-size:12.5px;}
+.dues-row:last-child{border-bottom:none;}
+.dues-info{display:flex;flex-direction:column;gap:2px;color:var(--text);}
+.dues-info small{color:var(--muted);font-weight:600;}
+h2.section{font-size:15px;margin:6px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.datehead{font-size:13px;font-weight:700;color:var(--muted);margin:10px 0 6px;}
+.rec{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;}
+.rec .top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;font-weight:700;font-size:15px;}
+.rec .top span{flex:1;min-width:0;word-break:break-word;}
+.rec .meta{color:var(--muted);font-size:12.5px;margin-top:4px;line-height:1.5;word-break:break-word;}
+.rec .amt{color:var(--accent-dark);font-weight:800;white-space:nowrap;}
+.rec-voice-note{display:block;width:100%;max-width:100%;height:32px;margin-top:6px;}
+.rec .dl{margin-top:8px;padding:8px 12px;font-size:13px;background:var(--chip);color:var(--text);border:1px solid var(--border);}
+.record-action-row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px;}
+.record-action-btn{padding:7px 8px;border-radius:10px;font-size:11px;font-weight:800;border:1px solid var(--border);background:var(--chip);color:var(--text);min-width:54px;display:flex;align-items:center;justify-content:center;gap:4px;line-height:1;}
+.record-action-btn .icon{font-size:14px;line-height:1;}
+.record-action-btn.delete{background:rgba(193,67,42,.08);color:var(--danger);border-color:rgba(193,67,42,.25);}
+.record-action-btn.edit{background:rgba(47,125,50,.08);color:var(--accent-dark);border-color:rgba(47,125,50,.25);}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:20px 0;}
+.note{font-size:12px;color:var(--muted);margin-top:6px;}
+.toggle{display:flex;overflow-x:auto;background:var(--chip);border-radius:10px;padding:4px;margin-bottom:12px;}
+.toggle button{flex:1 0 110px;padding:9px;background:transparent;color:var(--muted);font-weight:700;font-size:12.5px;}
+.toggle button.active{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.15);}
+.sumrow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+.sumrow .n{font-weight:700;font-size:14.5px;}
+.sumrow .s{color:var(--muted);font-size:12px;margin-top:2px;line-height:1.4;word-break:break-word;}
+.sumrow .a{font-weight:800;color:var(--accent-dark);font-size:15px;white-space:nowrap;text-align:right;}
+.sumrow .a small{display:block;color:var(--danger);font-size:11px;font-weight:700;margin-top:2px;}
+.profilebox p{font-size:13px;color:var(--muted);margin:2px 0 10px;}
+.activity-log{display:flex;flex-direction:column;gap:8px;max-height:180px;overflow:auto;margin-top:8px;padding-right:4px;}
+.activity-item{padding:8px 10px;border-radius:8px;background:var(--chip);border:1px solid var(--border);font-size:12px;line-height:1.5;color:var(--text);}
+.activity-item small{display:block;color:var(--muted);margin-top:2px;}
+.statsGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;}
+.statCard{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;}
+.statCard .label{font-size:11.5px;color:var(--muted);margin-bottom:4px;font-weight:700;}
+.statCard .value{font-size:19px;font-weight:800;color:var(--accent-dark);}
+.trash-rec{border-style:dashed;opacity:.92;}
+@media (max-width: 380px){
+  .toggle button{flex-basis:90px;}
+  .sumrow{padding:10px 11px;}
+  .pendingcard{padding:11px 12px;}
+  .rec{padding:10px 11px;}
+}
+.dangerbtn{width:100%;padding:12px;background:transparent;color:var(--danger);border:1px solid var(--danger);font-weight:700;}
+.share-whatsapp-btn{margin-top:6px;padding:8px 12px;background:#25d366;color:#fff;font-weight:700;font-size:12.5px;border-radius:8px;}
+.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(12px);background:rgba(20,28,21,0.92);color:#fff;padding:10px 16px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.01em;box-shadow:0 10px 24px rgba(0,0,0,.18);opacity:0;pointer-events:none;transition:all .22s ease;z-index:200;max-width:82vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* bottom nav */
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--border);
+  display:flex;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:env(safe-area-inset-bottom,0px);z-index:10;}
+.nav::-webkit-scrollbar{display:none;}
+.navbtn{flex:1 1 0;min-width:0;background:transparent;padding:6px 2px 6px;text-align:center;color:var(--muted);font-weight:700;font-size:clamp(8.5px, 2.6vw, 10.5px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:56px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.navbtn .ic{font-size:clamp(15px, 4.4vw, 18px);display:block;margin-bottom:1px;}
+.navbtn.active{color:var(--accent-dark);background:rgba(47,125,50,.05);}
+.view{display:none;}
+.view.active{display:block;}
+.manual-fields{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
+.manual-fields input{min-width:0;}
+.timerow{display:flex;align-items:center;gap:6px;}
+.timerow input{flex:1;width:auto;min-width:0;text-align:center;}
+.timerow .timesep{font-weight:800;color:var(--muted);padding-bottom:12px;}
+#manualAmount{font-size:22px;font-weight:800;color:var(--accent-dark);text-align:right;margin:4px 0 12px;}
+#billTemplate{position:fixed;left:-9999px;top:0;width:390px;background:#ffffff;color:#173d2b;padding:0;font-family:"Noto Sans Tamil",-apple-system,sans-serif;}
+#billTemplate .bill-head{display:flex;align-items:center;gap:12px;background:#075634;color:#fff;padding:18px 20px;border-bottom:5px solid #d9e51b;}
+#billTemplate .bill-mark{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border-radius:50%;background:#e3ed19;color:#075634;font-size:26px;font-weight:900;}
+#billTemplate .bill-brand{font-size:18px;line-height:1.35;font-weight:800;}
+#billTemplate .bill-caption{display:block;color:#e3ed19;font-size:11px;margin-top:2px;}
+#billTemplate .bill-body{padding:18px 20px 16px;}
+#billTemplate .bill-meta{display:grid;gap:4px;color:#607366;font-size:10px;margin-bottom:14px;}
+#billTemplate .bill-meta span:last-child{text-align:left;}
+#billTemplate .bill-customer{padding:12px;background:#eff5e9;border-left:4px solid #9dbb28;margin-bottom:16px;}
+#billTemplate .bill-customer small{display:block;color:#607366;font-size:10px;margin-bottom:4px;}
+#billTemplate .bill-customer strong{display:block;color:#173d2b;font-size:17px;overflow-wrap:anywhere;}
+#billTemplate .bill-section-title{font-size:11px;font-weight:800;color:#075634;margin-bottom:4px;}
+#billTemplate .brow{display:grid;grid-template-columns:1fr auto;gap:12px;font-size:12px;padding:8px 0;border-bottom:1px solid #e2e8dc;}
+#billTemplate .brow span{color:#607366;}
+#billTemplate .brow b{text-align:right;overflow-wrap:anywhere;}
+#billTemplate .bill-status{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;}
+#billTemplate .bill-status.paid{background:#e4f2df;color:#21613a;}
+#billTemplate .bill-status.partial{background:#fdf0d1;color:#8a5d0c;}
+#billTemplate .bill-status.unpaid{background:#fff0d6;color:#805313;}
+#billTemplate .bill-total{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#075634;color:#fff;padding:14px 16px;margin-top:16px;border-bottom:4px solid #d9e51b;}
+#billTemplate .bill-total span{font-size:13px;}
+#billTemplate .bill-total strong{font-size:22px;white-space:nowrap;}
+#billTemplate .bill-footer{text-align:center;color:#607366;font-size:10px;line-height:1.6;padding:14px 20px 0;margin-top:14px;border-top:1px solid #e2e8dc;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div id="toast" class="toast" aria-live="polite"></div>
+
+  <!-- HOME -->
+  <div class="view active" id="view-home">
+    <h1>🚜 டிராக்டர் வேலை கணக்கீடு</h1>
+    <p class="sub">கூலி & பெயரை நிரப்பி, தொடங்கு-வை அழுத்தவும். நிறுத்தும்போது பில் தானாக உருவாகும்.</p>
+    <div class="card">
+      <label for="rate">ஒரு மணி நேர கூலி (₹)</label>
+      <input type="number" id="rate" placeholder="e.g. 800" inputmode="decimal" min="0">
+
+      <label for="name">விவசாயி / வயல் பெயர்</label>
+      <div class="namerow">
+        <input type="text" id="name" placeholder="பெயரை தட்டச்சு செய்யவும் அல்லது பேசவும்" list="farmerList">
+        <button class="mic" id="micBtn" title="தமிழில் பெயரை பேசவும்">🎤</button>
+      </div>
+      <datalist id="farmerList"></datalist>
+      <div class="tip" id="micTip">
+        👉 <b>இப்போது உங்கள் விசைப்பலகையில் உள்ள மைக் ஐகானை தட்டவும்</b> (கீழ் வரிசையில், பொதுவாக space bar அருகில் இருக்கும்) மற்றும் பெயரை தமிழில் பேசவும்.
+      </div>
+      <div class="voice-note-preview" id="voiceNotePreview">
+        <audio controls id="voiceNoteAudio"></audio>
+        <button type="button" class="voice-note-clear" id="voiceNoteClear">✖ குரல் நீக்கு</button>
+      </div>
+
+      <div class="today-card" id="todayCard">
+        <div class="today-head"><span>இன்று</span><span id="todayDateLabel">-</span></div>
+        <div class="today-values">
+          <div class="block"><small>வரவு</small><strong id="todayIncome">₹0.00</strong></div>
+          <div class="block"><small>பாக்கி</small><strong id="todayPending">₹0.00</strong></div>
+          <div class="block"><small>பதிவுகள்</small><strong id="todayCount">0</strong></div>
+        </div>
+      </div>
+
+      <div class="timer" id="timerDisplay">00:00:00</div>
+      <div class="status" id="statusLine">தொடங்க தயார்</div>
+
+      <div class="btnrow">
+        <button class="big start" id="startBtn">தொடங்கு</button>
+        <button class="big stop" id="stopBtn" disabled>நிறுத்து</button>
+      </div>
+
+      <div class="result" id="resultBox">
+        <h3>பில் சுருக்கம்</h3>
+        <div class="rowline"><span>பெயர்</span><b id="rName">-</b></div>
+        <div class="rowline"><span>தொடக்கம்</span><b id="rStart">-</b></div>
+        <div class="rowline"><span>முடிவு</span><b id="rStop">-</b></div>
+        <div class="rowline"><span>கால அளவு</span><b id="rDur">-</b></div>
+        <div class="rowline"><span>சேவைகள்</span><b id="rCategory">உழவு</b></div>
+        <div class="rowline"><span>மணிக்கு கூலி</span><b id="rRate">-</b></div>
+        <div class="amount" id="rAmount">₹0</div>
+        <div class="paytoggle">
+          <button class="paybtn paid" id="markPaidBtn">✔ முழுவதும்</button>
+          <button class="paybtn partial" id="markPartialBtn">➗ பாகுதி</button>
+          <button class="paybtn unpaid active" id="markUnpaidBtn">✖ பாக்கி உள்ளது</button>
+        </div>
+        <div class="partial-amount-row" id="resultPartialRow">
+          <label for="resultPartialAmount">இதுவரை பெற்ற தொகை (₹)</label>
+          <input type="number" id="resultPartialAmount" placeholder="எ.கா. 500" inputmode="decimal" min="0" step="any">
+        </div>
+        <div class="note" id="pdfNote"></div>
+      </div>
+      <button class="nextbtn" id="nextBtn"><span>➡️</span> அடுத்த வேலை</button>
+
+      <div class="quick-actions">
+        <button class="quick-action" data-view="manual"><span class="qa-ic">📝</span>பதிவு</button>
+        <button class="quick-action" data-view="diesel"><span class="qa-ic">⛽</span>டீசல்</button>
+        <button class="quick-action" data-view="tanker"><span class="qa-ic">🚰</span>டேங்கர்</button>
+        <button class="quick-action" data-view="trailer"><span class="qa-ic">🚜</span>லோடு</button>
+        <button class="quick-action" data-view="summary"><span class="qa-ic">📊</span>சுருக்கம்</button>
+        <button class="quick-action" data-view="profile"><span class="qa-ic">⚙️</span>அமைப்பு</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="view" id="view-history">
+    <h1>அனைத்து பதிவுகள்</h1>
+    <p class="sub">முடிக்கப்பட்ட ஒவ்வொரு வேலையும், புதிய தேதி முதலில்.</p>
+    <p class="sub" id="backupStatusText" style="margin-top:-6px;"></p>
+    <div class="btnrow" style="margin-bottom:12px">
+      <button class="paybtn" id="exportRecordsBtn" type="button">பகிர்வு</button>
+      <button class="paybtn" id="importRecordsBtn" type="button">மீட்டமை</button>
+      <button class="paybtn" id="exportCsvBtn" type="button">CSV பதிவிறக்கு</button>
+      <input type="file" id="importRecordsFile" accept=".json,application/json" hidden>
+    </div>
+    <div class="note" id="recordsTransferStatus" aria-live="polite"></div>
+    <input type="text" id="historySearch" placeholder="பெயர், தேதி அல்லது தொகை மூலம் தேடுக...">
+    <div class="toggle">
+      <button class="history-range active" data-range="all">அனைத்தும்</button>
+      <button class="history-range" data-range="today">இன்று</button>
+      <button class="history-range" data-range="week">1 வாரம்</button>
+      <button class="history-range" data-range="month">1 மாதம்</button>
+    </div>
+    <div class="toggle">
+      <button class="history-status active" data-status="all">அனைத்து நிலை</button>
+      <button class="history-status" data-status="paid">✔ செலுத்தியது</button>
+      <button class="history-status" data-status="partial">➗ பாகுதி</button>
+      <button class="history-status" data-status="unpaid">✖ பாக்கி</button>
+    </div>
+    <div id="history"></div>
+  </div>
+
+  <!-- ARCHIVE -->
+  <div class="view" id="view-archive">
+    <h1>காப்பகம்</h1>
+    <p class="sub">பதிவு புள்ளிவிவரங்களும், நீக்கப்பட்ட பதிவுகளும் (30 நாட்களுக்குள் மீட்டமைக்கலாம்).</p>
+    <div class="statsGrid" id="archiveStats"></div>
+    <div id="trashList"></div>
+  </div>
+
+  <!-- MANUAL ENTRY -->
+    <div class="view" id="view-manual">
+      <h1>கைமுறை பதிவு</h1>
+      <p class="sub">வேலை நேரத்தை உள்ளிட்டு கணக்கிட்டு பில் உருவாக்கவும்.</p>
+      <div class="card">
+        <label for="manualRate">ஒரு மணி நேர கூலி (₹)</label>
+        <input type="number" id="manualRate" placeholder="e.g. 800" inputmode="decimal" min="0" step="any">
+        <label for="manualName">விவசாயி / வயல் பெயர்</label>
+        <div class="namerow" id="manualNameRow">
+          <input type="text" id="manualName" placeholder="பெயரை தட்டச்சு செய்யவும் அல்லது பேசவும்" list="farmerList">
+          <button class="mic" id="manualMicBtn" title="தமிழில் பெயரை பேசவும்">🎤</button>
+        </div>
+        <div class="tip" id="manualMicTip">👉 <b>விசைப்பலகையில் உள்ள மைக்கை தட்டி பெயரை தமிழில் பேசவும்.</b></div>
+        <div class="voice-note-preview" id="manualVoiceNotePreview">
+          <audio controls id="manualVoiceNoteAudio"></audio>
+          <button type="button" class="voice-note-clear" id="manualVoiceNoteClear">✖ குரல் நீக்கு</button>
+        </div>
+        <div class="manual-fields">
+          <div><label for="manualDate">தேதி</label><input type="date" id="manualDate"></div>
+          <div></div>
+          <div>
+            <label for="manualStartHour">தொடக்க நேரம்</label>
+            <div class="timerow">
+              <input type="number" id="manualStartHour" placeholder="மணி" inputmode="numeric" min="0" max="23" step="1">
+              <span class="timesep">:</span>
+              <input type="number" id="manualStartMinute" placeholder="நிமி" inputmode="numeric" min="0" max="59" step="1">
+            </div>
+          </div>
+          <div>
+            <label for="manualEndHour">முடிவு நேரம்</label>
+            <div class="timerow">
+              <input type="number" id="manualEndHour" placeholder="மணி" inputmode="numeric" min="0" max="23" step="1">
+              <span class="timesep">:</span>
+              <input type="number" id="manualEndMinute" placeholder="நிமி" inputmode="numeric" min="0" max="59" step="1">
+            </div>
+          </div>
+        </div>
+        <div class="rowline"><span>கால அளவு</span><b id="manualDuration">-</b></div>
+        <div id="manualAmount">₹0.00</div>
+        <div class="paytoggle entry-paytoggle" data-payment-form="manual">
+          <button type="button" class="paybtn paid" data-paid="true">✔ முழுவதும்</button>
+          <button type="button" class="paybtn partial" data-paid="partial">➗ பாகுதி</button>
+          <button type="button" class="paybtn unpaid active" data-paid="false">✖ பாக்கி உள்ளது</button>
+        </div>
+        <div class="partial-amount-row" id="manualPartialRow">
+          <label for="manualPartialAmount">இதுவரை பெற்ற தொகை (₹)</label>
+          <input type="number" id="manualPartialAmount" placeholder="எ.கா. 500" inputmode="decimal" min="0" step="any">
+        </div>
+        <div class="status" id="manualStatus" aria-live="polite"></div>
+        <button class="big start" id="manualSaveBtn" style="width:100%">பில் உருவாக்கி சேமி</button>
+        <div class="note" id="manualPdfNote" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <!-- WATER TANKER -->
+    <div class="view" id="view-tanker">
+      <h1>தண்ணீர் டேங்கர்</h1>
+      <p class="sub">டேங்கர் எண்ணிக்கையை உள்ளிட்டு மொத்தக் கூலியைக் கணக்கிடவும்.</p>
+      <div class="card">
+        <label for="tankerRate">ஒரு டேங்கர் விலை (₹)</label>
+        <input type="number" id="tankerRate" placeholder="e.g. 1500" inputmode="decimal" min="0" step="any">
+        <label for="tankerCount">எத்தனை டேங்கர்?</label>
+        <input type="number" id="tankerCount" placeholder="எண்ணிக்கை" inputmode="numeric" min="1" step="1">
+        <label for="tankerName">விவசாயி / வயல் பெயர்</label>
+        <div class="namerow" id="tankerNameRow">
+          <input type="text" id="tankerName" placeholder="பெயரை தட்டச்சு செய்யவும் அல்லது பேசவும்" list="farmerList">
+          <button class="mic" id="tankerMicBtn" title="தமிழில் பெயரை பேசவும்">🎤</button>
+        </div>
+        <div class="tip" id="tankerMicTip">👉 <b>விசைப்பலகையில் உள்ள மைக்கை தட்டி பெயரை தமிழில் பேசவும்.</b></div>
+        <div class="voice-note-preview" id="tankerVoiceNotePreview">
+          <audio controls id="tankerVoiceNoteAudio"></audio>
+          <button type="button" class="voice-note-clear" id="tankerVoiceNoteClear">✖ குரல் நீக்கு</button>
+        </div>
+        <label for="tankerDate">தேதி</label>
+        <input type="date" id="tankerDate">
+        <div class="rowline"><span>மொத்த டேங்கர்</span><b id="tankerQuantity">0</b></div>
+        <div id="tankerAmount">₹0.00</div>
+        <div class="paytoggle entry-paytoggle" data-payment-form="tanker">
+          <button type="button" class="paybtn paid" data-paid="true">✔ முழுவதும்</button>
+          <button type="button" class="paybtn partial" data-paid="partial">➗ பாகுதி</button>
+          <button type="button" class="paybtn unpaid active" data-paid="false">✖ பாக்கி உள்ளது</button>
+        </div>
+        <div class="partial-amount-row" id="tankerPartialRow">
+          <label for="tankerPartialAmount">இதுவரை பெற்ற தொகை (₹)</label>
+          <input type="number" id="tankerPartialAmount" placeholder="எ.கா. 500" inputmode="decimal" min="0" step="any">
+        </div>
+        <div class="status" id="tankerStatus" aria-live="polite"></div>
+        <button class="big start" id="tankerSaveBtn" style="width:100%">பில் உருவாக்கி சேமி</button>
+        <div class="note" id="tankerPdfNote" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <!-- TRAILER LOAD -->
+    <div class="view" id="view-trailer">
+      <h1>டிரெய்லர் லோடு</h1>
+      <p class="sub">ஒரு லோடு விலையையும் எண்ணிக்கையையும் உள்ளிட்டு மொத்தத்தைக் கணக்கிடவும்.</p>
+      <div class="card">
+        <label for="trailerRate">ஒரு டிரெய்லர் லோடு விலை (₹)</label>
+        <input type="number" id="trailerRate" placeholder="e.g. 1500" inputmode="decimal" min="0" step="any">
+        <label for="trailerCount">எத்தனை டிரெய்லர் லோடு?</label>
+        <input type="number" id="trailerCount" placeholder="எண்ணிக்கை" inputmode="numeric" min="1" step="1">
+        <label for="trailerName">விவசாயி / வயல் பெயர்</label>
+        <div class="namerow" id="trailerNameRow">
+          <input type="text" id="trailerName" placeholder="பெயரை தட்டச்சு செய்யவும் அல்லது பேசவும்" list="farmerList">
+          <button class="mic" id="trailerMicBtn" title="தமிழில் பெயரை பேசவும்">🎤</button>
+        </div>
+        <div class="tip" id="trailerMicTip">👉 <b>விசைப்பலகையில் உள்ள மைக்கை தட்டி பெயரை தமிழில் பேசவும்.</b></div>
+        <div class="voice-note-preview" id="trailerVoiceNotePreview">
+          <audio controls id="trailerVoiceNoteAudio"></audio>
+          <button type="button" class="voice-note-clear" id="trailerVoiceNoteClear">✖ குரல் நீக்கு</button>
+        </div>
+        <label for="trailerDate">தேதி</label>
+        <input type="date" id="trailerDate">
+        <div class="rowline"><span>மொத்த டிரெய்லர் லோடு</span><b id="trailerQuantity">0</b></div>
+        <div id="trailerAmount">₹0.00</div>
+        <div class="paytoggle entry-paytoggle" data-payment-form="trailer">
+          <button type="button" class="paybtn paid" data-paid="true">✔ முழுவதும்</button>
+          <button type="button" class="paybtn partial" data-paid="partial">➗ பாகுதி</button>
+          <button type="button" class="paybtn unpaid active" data-paid="false">✖ பாக்கி உள்ளது</button>
+        </div>
+        <div class="partial-amount-row" id="trailerPartialRow">
+          <label for="trailerPartialAmount">இதுவரை பெற்ற தொகை (₹)</label>
+          <input type="number" id="trailerPartialAmount" placeholder="எ.கா. 500" inputmode="decimal" min="0" step="any">
+        </div>
+        <div class="status" id="trailerStatus" aria-live="polite"></div>
+        <button class="big start" id="trailerSaveBtn" style="width:100%">பில் உருவாக்கி சேமி</button>
+        <div class="note" id="trailerPdfNote" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <!-- DIESEL TRACKING -->
+    <div class="view" id="view-diesel">
+      <h1>டீசல் பதிவு</h1>
+      <p class="sub">டீசல் செலவையும் தேதியையும் பதிவு செய்யவும்.</p>
+      <div class="card">
+        <label for="dieselRate">டீசல் செலவு (₹)</label>
+        <input type="number" id="dieselRate" placeholder="e.g. 1500" inputmode="decimal" min="0" step="any">
+        <label for="dieselDate">தேதி</label>
+        <input type="date" id="dieselDate">
+        <div class="rowline"><span>மொத்த டீசல் செலவு</span><b id="dieselAmount">₹0.00</b></div>
+        <div class="paytoggle entry-paytoggle" data-payment-form="diesel">
+          <button type="button" class="paybtn paid active" data-paid="true">✔ முழுவதும்</button>
+          <button type="button" class="paybtn partial" data-paid="partial">➗ பாகுதி</button>
+          <button type="button" class="paybtn unpaid" data-paid="false">✖ பாக்கி உள்ளது</button>
+        </div>
+        <div class="partial-amount-row" id="dieselPartialRow">
+          <label for="dieselPartialAmount">இதுவரை பெற்ற தொகை (₹)</label>
+          <input type="number" id="dieselPartialAmount" placeholder="எ.கா. 500" inputmode="decimal" min="0" step="any">
+        </div>
+        <div class="status" id="dieselStatus" aria-live="polite"></div>
+        <button class="big start" id="dieselSaveBtn" style="width:100%">பதிவைச் சேமி</button>
+      </div>
+    </div>
+
+    <!-- SUMMARY -->
+  <div class="view" id="view-summary">
+    <h1>சுருக்கம்</h1>
+    <p class="sub">உங்களுக்கு தேவையான வகையில் மொத்தத் தொகைகள்.</p>
+    <div class="toggle">
+      <button class="summary-mode active" data-mode="farmer">விவசாயி வாரியாக</button>
+      <button class="summary-mode" data-mode="date">தேதி வாரியாக</button>
+      <button class="summary-mode" data-mode="category">சேவை வகை வாரியாக</button>
+      <button class="summary-mode" data-mode="diesel">டீசல் விலை பதிவு</button>
+      <button class="summary-mode" data-mode="dues">பாக்கி பட்டியல்</button>
+    </div>
+    <div id="duesSearchRow" style="display:none;margin-bottom:10px;">
+      <input type="text" id="duesSearch" placeholder="பெயர் மூலம் பாக்கி பட்டியலில் தேடுக...">
+    </div>
+    <div id="summaryBox"></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="view" id="view-profile">
+    <h1>சுயவிவரம் & அமைப்புகள்</h1>
+    <div class="card profilebox">
+      <label for="defRate">இயல்பு மணிநேர கூலி (₹)</label>
+      <p>ஒவ்வொரு முறையும் மீண்டும் தட்டச்சு செய்ய வேண்டாம் என, முகப்பு பக்கத்தில் இது தானாக நிரப்பப்படும்.</p>
+      <input type="number" id="defRate" placeholder="e.g. 800" inputmode="decimal" min="0">
+
+      <label>சேமிக்கப்பட்ட விவசாயிகள் (<span id="farmerCount">0</span>)</label>
+      <div class="quick-farmers" id="farmerChipList"></div>
+
+      <label>இந்த சாதனத்தில் சேமிக்கப்பட்ட பதிவுகள்</label>
+      <p id="recCount">0 பதிவுகள்</p>
+
+      <label>தொடர்பு விவரம்</label>
+      <p>தொலைபேசி: 8056938635<br>இடம்: மொச்சியேந்தல்</p>
+
+      <label>செயல் பதிவு</label>
+      <div class="activity-log" id="activityLog"></div>
+
+      <button class="dangerbtn" id="clearAllBtn">இந்த சாதனத்திலிருந்து அனைத்து பதிவுகளையும் நீக்கு</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="nav">
+    <button class="navbtn active" data-view="home"><span class="ic">🏠</span>முகப்பு</button>
+    <button class="navbtn" data-view="manual"><span class="ic">📝</span>சேர்</button>
+    <button class="navbtn" data-view="history"><span class="ic">📋</span>பதிவுகள்</button>
+    <button class="navbtn" data-view="diesel"><span class="ic">⛽</span>டீசல்</button>
+    <button class="navbtn" data-view="tanker"><span class="ic">🚰</span>டேங்கர்</button>
+    <button class="navbtn" data-view="trailer"><span class="ic">🚜</span>லோடு</button>
+    <button class="navbtn" data-view="summary"><span class="ic">📊</span>சுருக்கம்</button>
+    <button class="navbtn" data-view="profile"><span class="ic">⚙️</span>செயல்</button>
+    <button class="navbtn" data-view="archive"><span class="ic">🗄️</span>காப்பகம்</button>
+  </div>
+</div>
+
+<div id="billTemplate">
+  <header class="bill-head">
+    <div class="bill-mark" aria-hidden="true">நீ</div>
+    <div><div class="bill-brand">நீதி டிராக்டர் சேவைகள்</div><span class="bill-caption" id="tBillCaption">வேலை நேரம் மற்றும் கூலி ரசீது</span></div>
+  </header>
+  <div class="bill-body">
+    <div class="bill-meta"><span>ரசீது எண் · <b id="tBillId">-</b></span><span id="tDate">-</span></div>
+    <div class="bill-customer"><small id="tCustomerLabel">விவசாயி / வயல் பெயர்</small><strong id="tName">-</strong></div>
+    <div class="bill-section-title" id="tBillSectionTitle">வேலை விவரம்</div>
+    <div class="brow" id="tStartRow"><span>தொடக்க நேரம்</span><b id="tStart">-</b></div>
+    <div class="brow" id="tStopRow"><span>முடிவு நேரம்</span><b id="tStop">-</b></div>
+    <div class="brow" id="tDurRow"><span>கால அளவு</span><b id="tDur">-</b></div>
+    <div class="brow" id="tServiceCountRow" style="display:none"><span id="tServiceCountLabel">எண்ணிக்கை</span><b id="tServiceCount">-</b></div>
+    <div class="brow" id="tFuelNoteRow" style="display:none"><span>வாகன விவரம்</span><b id="tFuelNote">-</b></div>
+    <div class="brow"><span>சேவைகள்</span><b id="tServiceCategory">-</b></div>
+    <div class="brow"><span id="tRateLabel">மணிக்கு கூலி</span><b id="tRate">-</b></div>
+    <div class="brow"><span>செலுத்தும் நிலை</span><b><span class="bill-status" id="tStatus">-</span></b></div>
+    <div class="brow" id="tBalanceDueRow" style="display:none"><span>மீதி பாக்கி</span><b id="tBalanceDue">-</b></div>
+    <div class="bill-total"><span id="tAmountLabel">மொத்தக் கூலி</span><strong id="tAmount">₹0.00</strong></div>
+    <div class="bill-footer">இந்த சேவைக்கு நன்றி!<br>நீதி டிராக்டர் சேவைகள்<br>தொலைபேசி: 8056938635<br>இடம்: மொச்சியேந்தல்</div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = "tractor_records_v1";
+const PROFILE_KEY = "tractor_profile_v1";
+const MAX_LOG_ENTRIES = 18;
+function saveBlobAsFile(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+
+const $ = id => document.getElementById(id);
+function loadRecords(){ try{ const r=localStorage.getItem(STORAGE_KEY); return r?JSON.parse(r):[]; }catch(e){ return []; } }
+function saveRecords(recs){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(recs)); }catch(e){} }
+const DELETED_KEY = "tractor_deleted_records_v1";
+const DELETE_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+function loadDeletedRecords(){ try{ const r=localStorage.getItem(DELETED_KEY); return r?JSON.parse(r):[]; }catch(e){ return []; } }
+function saveDeletedRecords(recs){ try{ localStorage.setItem(DELETED_KEY, JSON.stringify(recs)); }catch(e){} }
+function loadProfile(){ try{ const r=localStorage.getItem(PROFILE_KEY); if(!r) return {defRate:null, farmers:[], logs:[], farmerRates:{}, lastBackupAt:null}; const parsed=JSON.parse(r); return {defRate:parsed.defRate ?? null, farmers:Array.isArray(parsed.farmers)?parsed.farmers:[], logs:Array.isArray(parsed.logs)?parsed.logs:[], farmerRates:(parsed.farmerRates && typeof parsed.farmerRates==="object" && !Array.isArray(parsed.farmerRates))?parsed.farmerRates:{}, lastBackupAt:typeof parsed.lastBackupAt==="number"?parsed.lastBackupAt:null}; }catch(e){ return {defRate:null, farmers:[], logs:[], farmerRates:{}, lastBackupAt:null}; } }
+function saveProfile(p){ try{ if(!Array.isArray(p.logs)) p.logs=[]; if(!p.farmerRates || typeof p.farmerRates!=="object") p.farmerRates={}; localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }catch(e){} }
+// per-farmer, per-service-form rate memory so recurring customers don't need their rate re-typed
+function rememberFarmerRate(name, form, rate){
+  if(!name || !Number.isFinite(rate)) return;
+  if(!profile.farmerRates || typeof profile.farmerRates !== "object") profile.farmerRates = {};
+  profile.farmerRates[name] = { ...(profile.farmerRates[name]||{}), [form]: rate };
+  saveProfile(profile);
+}
+function applyKnownFarmerRate(name, form, rateInputId){
+  const known = profile.farmerRates && profile.farmerRates[name] && profile.farmerRates[name][form];
+  if(Number.isFinite(known)) $(rateInputId).value = known;
+}
+
+function appendActivityLog(action, details=""){
+  if(!Array.isArray(profile.logs)) profile.logs = [];
+  const stamp = new Date().toISOString();
+  profile.logs.push({
+    id: `${Date.now()}-${Math.random().toString(16).slice(2,8)}`,
+    action,
+    details,
+    time: stamp
+  });
+  profile.logs = profile.logs.slice(-MAX_LOG_ENTRIES);
+  saveProfile(profile);
+}
+
+let records = loadRecords();
+let profile = loadProfile();
+let deletedRecords = loadDeletedRecords();
+let entry = { startTime:null, timerInterval:null };
+let historyFilter = { query: "", range: "all", status: "all" };
+
+function pruneExpiredDeletedRecords(){
+  const cutoff = Date.now() - DELETE_RETENTION_MS;
+  deletedRecords = deletedRecords.filter(r => (r.deletedAt || 0) > cutoff);
+  saveDeletedRecords(deletedRecords);
+}
+pruneExpiredDeletedRecords();
+
+function fmtDuration(ms){ const s=Math.floor((Number(ms)||0)/1000); return `${String(Math.floor(s/3600)).padStart(2,"0")}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; }
+function fmtTime(d){ return d.toLocaleString('ta-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'short'}); }
+function fmtMoney(n){ return "₹" + (Number(n)||0).toFixed(2); }
+function showToast(message, duration=2200){
+  const toast = $("toast");
+  if(!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => toast.classList.remove("show"), duration);
+}
+function dateKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function escapeHtml(value){ return String(value).replace(/[&<>"']/g, character=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[character])); }
+function getServiceCategory(record){
+  if(record.kind === "tanker") return "தண்ணீர் டேங்கர்";
+  if(record.kind === "trailer") return "டிரெய்லர் லோடு";
+  if(record.kind === "diesel" || record.kind === "diesel-rate") return null;
+  return record.serviceCategory || "உழவு";
+}
+// amountPaid drives partial-payment tracking; legacy records only have a paid boolean, so fall back to full/zero
+function getPaidAmount(record){
+  const total = Number(record.amount)||0;
+  if(record.amountPaid != null) return Math.max(0, Math.min(Number(record.amountPaid)||0, total));
+  return record.paid ? total : 0;
+}
+function getBalanceDue(record){
+  return Math.max(0, (Number(record.amount)||0) - getPaidAmount(record));
+}
+function getPaymentState(record){
+  const total = Number(record.amount)||0;
+  const paidAmt = getPaidAmount(record);
+  if(total<=0) return record.paid ? "paid" : "unpaid";
+  if(paidAmt <= 0) return "unpaid";
+  if(paidAmt >= total) return "paid";
+  return "partial";
+}
+// keeps the legacy `paid` boolean in sync with amountPaid so older summary code paths stay correct
+function applyPaymentState(record, state, amountPaidInput){
+  const total = Number(record.amount)||0;
+  if(state === "paid"){ record.amountPaid = total; record.paid = true; }
+  else if(state === "partial"){
+    const amt = Math.max(0, Math.min(Number(amountPaidInput)||0, total));
+    record.amountPaid = amt;
+    record.paid = total>0 && amt >= total;
+  } else { record.amountPaid = 0; record.paid = false; }
+}
+function setupEntryPaymentSelectors(){
+  document.querySelectorAll(".entry-paytoggle").forEach(group=>{
+    const formKey = group.dataset.paymentForm;
+    const partialRow = formKey ? $(`${formKey}PartialRow`) : null;
+    group.querySelectorAll("button[data-paid]").forEach(button=>button.addEventListener("click", ()=>{
+      group.querySelectorAll("button[data-paid]").forEach(option=>option.classList.toggle("active", option===button));
+      if(partialRow){
+        partialRow.classList.toggle("show", button.dataset.paid === "partial");
+        if(button.dataset.paid === "partial") partialRow.querySelector("input")?.focus();
+      }
+    }));
+  });
+}
+function getEntryPayment(form){
+  const formNode = $(form);
+  if(!formNode) return {state:"unpaid", amountPaid:0};
+  const group = formNode.querySelector(".entry-paytoggle");
+  const activeBtn = group?.querySelector(".active");
+  const raw = activeBtn?.dataset.paid;
+  const state = raw === "true" ? "paid" : raw === "partial" ? "partial" : "unpaid";
+  if(state === "partial"){
+    const formKey = group.dataset.paymentForm;
+    const input = formKey ? $(`${formKey}PartialAmount`) : null;
+    return {state, amountPaid: Math.max(0, parseFloat(input?.value) || 0)};
+  }
+  return {state, amountPaid: 0};
+}
+function setEntryPayment(form, record){
+  const formNode = $(form);
+  if(!formNode) return;
+  const group = formNode.querySelector(".entry-paytoggle");
+  if(!group) return;
+  const state = getPaymentState(record);
+  const dataVal = state === "paid" ? "true" : state === "partial" ? "partial" : "false";
+  group.querySelectorAll("button[data-paid]").forEach(button=>{
+    button.classList.toggle("active", button.dataset.paid === dataVal);
+  });
+  const formKey = group.dataset.paymentForm;
+  const partialRow = formKey ? $(`${formKey}PartialRow`) : null;
+  const partialInput = formKey ? $(`${formKey}PartialAmount`) : null;
+  if(partialRow) partialRow.classList.toggle("show", state === "partial");
+  if(partialInput) partialInput.value = state === "partial" ? getPaidAmount(record).toFixed(2) : "";
+}
+setupEntryPaymentSelectors();
+
+// clears a stale edit-mode (dataset.editId) left behind when a user opens an entry
+// form via nav/quick-action instead of via modifyRecord — prevents a new entry from
+// silently overwriting the record that was previously being edited.
+const ENTRY_FORM_DEFAULTS = {
+  manual: {btn:"manualSaveBtn", label:"பில் உருவாக்கி சேமி", status:"manualStatus", note:"manualPdfNote"},
+  tanker: {btn:"tankerSaveBtn", label:"பில் உருவாக்கி சேமி", status:"tankerStatus", note:"tankerPdfNote"},
+  trailer: {btn:"trailerSaveBtn", label:"பில் உருவாக்கி சேமி", status:"trailerStatus", note:"trailerPdfNote"},
+  diesel: {btn:"dieselSaveBtn", label:"பதிவைச் சேமி", status:"dieselStatus"}
+};
+function resetEntryForm(viewName){
+  const conf = ENTRY_FORM_DEFAULTS[viewName];
+  if(!conf) return;
+  const btn = $(conf.btn);
+  if(!btn || !btn.dataset.editId) return;
+  delete btn.dataset.editId;
+  btn.textContent = conf.label;
+  if(conf.status) $(conf.status).textContent = "";
+  if(conf.note) $(conf.note).textContent = "";
+}
+
+// ---- nav ----
+function openView(viewName){
+  document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active", b.dataset.view===viewName));
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  const target = $("view-"+viewName);
+  if(target) target.classList.add("active");
+  resetEntryForm(viewName);
+  if(viewName==="history") renderHistory();
+  if(viewName==="summary") renderSummary();
+  if(viewName==="profile") renderProfile();
+  if(viewName==="archive") renderArchive();
+}
+document.querySelectorAll(".navbtn").forEach(btn=>{
+  btn.addEventListener("click", ()=>openView(btn.dataset.view));
+});
+document.querySelectorAll(".quick-action").forEach(btn=>{
+  btn.addEventListener("click", ()=>openView(btn.dataset.view));
+});
+
+// ---- voice input (layman-friendly: open keyboard + tip immediately, try in-page speech quietly) ----
+// ---- + voice note recording: keeps the actual spoken audio clip attached to the record ----
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+const micBtn = $("micBtn");
+let tipTimer = null;
+const pendingVoiceNotes = {}; // sectionKey -> undefined(untouched) | null(cleared) | dataURL(new note)
+const VOICE_NOTE_MAX_MS = 8000;
+
+async function beginVoiceNoteCapture(sectionKey, previewEl, audioEl){
+  if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && typeof MediaRecorder !== "undefined")) return null;
+  let stream;
+  try{ stream = await navigator.mediaDevices.getUserMedia({audio:true}); }
+  catch(e){ return null; }
+  let recorder;
+  try{ recorder = new MediaRecorder(stream); }
+  catch(e){ stream.getTracks().forEach(t=>t.stop()); return null; }
+  const chunks = [];
+  recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
+  recorder.onstop = () => {
+    stream.getTracks().forEach(t=>t.stop());
+    if(!chunks.length) return;
+    const blob = new Blob(chunks, {type: recorder.mimeType || "audio/webm"});
+    const reader = new FileReader();
+    reader.onload = () => {
+      pendingVoiceNotes[sectionKey] = reader.result;
+      if(audioEl) audioEl.src = reader.result;
+      if(previewEl) previewEl.style.display = "flex";
+    };
+    reader.readAsDataURL(blob);
+  };
+  recorder.start();
+  const maxTimer = setTimeout(()=>{ if(recorder.state !== "inactive") recorder.stop(); }, VOICE_NOTE_MAX_MS);
+  return () => { clearTimeout(maxTimer); if(recorder.state !== "inactive") recorder.stop(); };
+}
+
+function clearVoiceNote(sectionKey, previewEl, audioEl){
+  pendingVoiceNotes[sectionKey] = null; // explicit removal, distinct from "untouched"
+  if(audioEl) audioEl.src = "";
+  if(previewEl) previewEl.style.display = "none";
+}
+
+// Reads whatever the user did with the mic this session: undefined = leave existing record untouched.
+function resolveVoiceNote(sectionKey, previewEl, audioEl){
+  const changed = Object.prototype.hasOwnProperty.call(pendingVoiceNotes, sectionKey);
+  const value = pendingVoiceNotes[sectionKey];
+  delete pendingVoiceNotes[sectionKey];
+  if(audioEl) audioEl.src = "";
+  if(previewEl) previewEl.style.display = "none";
+  return {changed, value};
+}
+
+function showExistingVoiceNote(sectionKey, previewEl, audioEl, record){
+  delete pendingVoiceNotes[sectionKey];
+  if(record && record.voiceNote){
+    if(audioEl) audioEl.src = record.voiceNote;
+    if(previewEl) previewEl.style.display = "flex";
+  } else {
+    if(audioEl) audioEl.src = "";
+    if(previewEl) previewEl.style.display = "none";
+  }
+}
+
+function openKeyboardWithTip(){
+  const nameInput = $("name");
+  nameInput.focus();
+  nameInput.setSelectionRange(nameInput.value.length, nameInput.value.length);
+  const namerow = document.querySelector(".namerow");
+  namerow.classList.remove("pulseHighlight"); void namerow.offsetWidth; namerow.classList.add("pulseHighlight");
+  $("micTip").classList.add("show");
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(()=>{ $("micTip").classList.remove("show"); }, 8000);
+}
+
+micBtn.addEventListener("click", async () => {
+  // Always do the thing that reliably works first: open the keyboard and show the tip.
+  openKeyboardWithTip();
+  $("statusLine").textContent = "பேச உங்கள் விசைப்பலகையில் உள்ள மைக்கை தட்டவும்";
+
+  // Quietly also record the spoken voice note and try in-page speech recognition — if it works, great; if not, no harm done.
+  const stopVoiceNote = await beginVoiceNoteCapture("home", $("voiceNotePreview"), $("voiceNoteAudio"));
+  if(!SpeechRec) return;
+  try{
+    const rec = new SpeechRec();
+    rec.lang = "ta-IN"; rec.interimResults=false; rec.maxAlternatives=1;
+    rec.onresult = ev => {
+      $("name").value = ev.results[0][0].transcript;
+      $("statusLine").textContent = "தொடங்க தயார்";
+      $("micTip").classList.remove("show");
+      if(stopVoiceNote) stopVoiceNote();
+    };
+    rec.onerror = () => { if(stopVoiceNote) stopVoiceNote(); }; // keyboard tip already showing, no need for a technical error
+    rec.start();
+  }catch(e){ /* in-page mic unavailable here — keyboard tip already guides the user */ }
+});
+$("voiceNoteClear").addEventListener("click", ()=>clearVoiceNote("home", $("voiceNotePreview"), $("voiceNoteAudio")));
+
+// ---- manual entry ----
+function localDateValue(date){
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+}
+$("manualDate").value = localDateValue(new Date());
+if(profile.defRate) $("manualRate").value = profile.defRate;
+
+function setupNameVoiceInput(inputId, buttonId, tipId, rowId, sectionKey, previewId, audioId, clearId){
+  $(buttonId).addEventListener("click", async () => {
+    const input = $(inputId);
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+    const row = $(rowId);
+    row.classList.remove("pulseHighlight"); void row.offsetWidth; row.classList.add("pulseHighlight");
+    $(tipId).classList.add("show");
+    clearTimeout(tipTimer);
+    tipTimer = setTimeout(()=>$(tipId).classList.remove("show"), 8000);
+    const stopVoiceNote = await beginVoiceNoteCapture(sectionKey, $(previewId), $(audioId));
+    if(!SpeechRec) return;
+    try{
+      const rec = new SpeechRec();
+      rec.lang = "ta-IN"; rec.interimResults=false; rec.maxAlternatives=1;
+      rec.onresult = ev => {
+        input.value = ev.results[0][0].transcript;
+        $(tipId).classList.remove("show");
+        if(stopVoiceNote) stopVoiceNote();
+      };
+      rec.onerror = () => { if(stopVoiceNote) stopVoiceNote(); };
+      rec.start();
+    }catch(e){ /* keyboard tip still guides the user */ }
+  });
+  $(clearId).addEventListener("click", ()=>clearVoiceNote(sectionKey, $(previewId), $(audioId)));
+}
+setupNameVoiceInput("manualName", "manualMicBtn", "manualMicTip", "manualNameRow", "manual", "manualVoiceNotePreview", "manualVoiceNoteAudio", "manualVoiceNoteClear");
+setupNameVoiceInput("tankerName", "tankerMicBtn", "tankerMicTip", "tankerNameRow", "tanker", "tankerVoiceNotePreview", "tankerVoiceNoteAudio", "tankerVoiceNoteClear");
+setupNameVoiceInput("trailerName", "trailerMicBtn", "trailerMicTip", "trailerNameRow", "trailer", "trailerVoiceNotePreview", "trailerVoiceNoteAudio", "trailerVoiceNoteClear");
+$("manualName").addEventListener("change", ()=>applyKnownFarmerRate($("manualName").value.trim(), "manual", "manualRate"));
+$("tankerName").addEventListener("change", ()=>applyKnownFarmerRate($("tankerName").value.trim(), "tanker", "tankerRate"));
+$("trailerName").addEventListener("change", ()=>applyKnownFarmerRate($("trailerName").value.trim(), "trailer", "trailerRate"));
+
+function getManualEntry(){
+  const rate = parseFloat($("manualRate").value);
+  const name = $("manualName").value.trim();
+  const date = $("manualDate").value;
+  const startHour = parseInt($("manualStartHour").value, 10);
+  const startMinute = parseInt($("manualStartMinute").value, 10);
+  const endHour = parseInt($("manualEndHour").value, 10);
+  const endMinute = parseInt($("manualEndMinute").value, 10);
+  if(!rate || rate<=0) return {error:"முதலில் மணிநேர கூலியை உள்ளிடவும்"};
+  if(!name) return {error:"முதலில் விவசாயி / வயல் பெயரை உள்ளிடவும்"};
+  if(!date) return {error:"தேதியை உள்ளிடவும்"};
+  const validHour = h => Number.isInteger(h) && h>=0 && h<=23;
+  const validMinute = m => Number.isInteger(m) && m>=0 && m<=59;
+  if(!validHour(startHour) || !validMinute(startMinute) || !validHour(endHour) || !validMinute(endMinute)){
+    return {error:"தொடக்க/முடிவு நேரத்தை சரியாக உள்ளிடவும் (மணி: 0-23, நிமி: 0-59)"};
+  }
+  const start = `${String(startHour).padStart(2,"0")}:${String(startMinute).padStart(2,"0")}`;
+  const end = `${String(endHour).padStart(2,"0")}:${String(endMinute).padStart(2,"0")}`;
+  const startTime = new Date(`${date}T${start}:00`);
+  const stopTime = new Date(`${date}T${end}:00`);
+  if(stopTime.getTime()<startTime.getTime()) stopTime.setDate(stopTime.getDate()+1);
+  const durationMs = stopTime.getTime()-startTime.getTime();
+  if(!Number.isFinite(durationMs) || durationMs<=0) return {error:"தொடக்க நேரமும் முடிவு நேரமும் வேறுபட்டிருக்க வேண்டும்"};
+  return {rate,name,date,startTime,stopTime,durationMs,amount:rate*durationMs/3600000};
+}
+
+function updateManualCalculation(){
+  const values = getManualEntry();
+  $("manualDuration").textContent = values.durationMs ? fmtDuration(values.durationMs) : "-";
+  $("manualAmount").textContent = fmtMoney(values.amount || 0);
+}
+["manualRate","manualName","manualDate","manualStartHour","manualStartMinute","manualEndHour","manualEndMinute"].forEach(id=>
+  $(id).addEventListener("input", updateManualCalculation)
+);
+
+$("manualSaveBtn").addEventListener("click", async () => {
+  const values = getManualEntry();
+  if(values.error){ $("manualStatus").textContent=values.error; return; }
+  $("manualStatus").textContent="";
+  const record = {id:$("manualSaveBtn").dataset.editId || Date.now().toString(36), date:values.date, name:values.name, rate:values.rate,
+    amount:values.amount, startTime:values.startTime.toISOString(), stopTime:values.stopTime.toISOString(),
+    durationMs:values.durationMs, manual:true, serviceCategory:"உழவு"};
+  const payment = getEntryPayment("view-manual");
+  applyPaymentState(record, payment.state, payment.amountPaid);
+  const voiceNote = resolveVoiceNote("manual", $("manualVoiceNotePreview"), $("manualVoiceNoteAudio"));
+  if(voiceNote.changed) record.voiceNote = voiceNote.value;
+
+  const editId = $("manualSaveBtn").dataset.editId;
+  let savedRecord = record;
+  if(editId){
+    const index = records.findIndex(r => r.id === editId);
+    if(index >= 0){
+      records[index] = { ...records[index], ...record, id: editId };
+      savedRecord = records[index];
+    }
+  } else {
+    records.push(record);
+  }
+
+  saveRecords(records);
+  if(!profile.farmers.includes(values.name)){ profile.farmers.push(values.name); saveProfile(profile); }
+  rememberFarmerRate(values.name, "manual", values.rate);
+  appendActivityLog(editId ? "கைமுறை பதிவு மாற்றப்பட்டது" : "கைமுறை பதிவு சேமிக்கப்பட்டது", `${values.name} · ${fmtMoney(values.amount)}`);
+  $("manualSaveBtn").disabled=true;
+  $("manualStatus").textContent=editId ? "மாற்றம் சேமிக்கப்பட்டது" : "பதிவு சேமிக்கப்பட்டது";
+  $("manualPdfNote").textContent="பில் PDF தயாராகிறது...";
+  showToast(editId ? "மாற்றங்கள் சேமிக்கப்பட்டன" : "பதிவு சேமிக்கப்பட்டது");
+  delete $("manualSaveBtn").dataset.editId;
+  $("manualSaveBtn").textContent = "பில் உருவாக்கி சேமி";
+  renderHistory(); renderSummary(); renderProfile();
+  await generateAndSaveBill(savedRecord);
+  $("manualSaveBtn").disabled=false;
+});
+
+// ---- water tanker entry ----
+$("tankerDate").value = localDateValue(new Date());
+
+function getTankerEntry(){
+  const rate = parseFloat($("tankerRate").value);
+  const tankCount = Number($("tankerCount").value);
+  const name = $("tankerName").value.trim();
+  const date = $("tankerDate").value;
+  if(!rate || rate<=0) return {error:"ஒரு டேங்கருக்கான விலையை உள்ளிடவும்"};
+  if(!Number.isInteger(tankCount) || tankCount<1) return {error:"டேங்கர் எண்ணிக்கையை சரியாக உள்ளிடவும்"};
+  if(!name) return {error:"முதலில் விவசாயி / வயல் பெயரை உள்ளிடவும்"};
+  if(!date) return {error:"தேதியை உள்ளிடவும்"};
+  return {rate,tankCount,name,date,amount:rate*tankCount};
+}
+
+function updateTankerCalculation(){
+  const values = getTankerEntry();
+  $("tankerQuantity").textContent = Number.isInteger(values.tankCount) && values.tankCount>0 ? values.tankCount : "0";
+  $("tankerAmount").textContent = fmtMoney(values.amount || 0);
+}
+["tankerRate","tankerCount","tankerName","tankerDate"].forEach(id=>
+  $(id).addEventListener("input", updateTankerCalculation)
+);
+
+$("tankerSaveBtn").addEventListener("click", async () => {
+  const values = getTankerEntry();
+  if(values.error){ $("tankerStatus").textContent=values.error; return; }
+  const dateTime = new Date(`${values.date}T12:00:00`);
+  const payload = {kind:"tanker", date:values.date, name:values.name,
+    rate:values.rate, tankCount:values.tankCount, amount:values.amount,
+    startTime:dateTime.toISOString(), stopTime:dateTime.toISOString(), durationMs:0, serviceCategory:"தண்ணீர் டேங்கர்"};
+  const tankerPayment = getEntryPayment("view-tanker");
+  applyPaymentState(payload, tankerPayment.state, tankerPayment.amountPaid);
+  const voiceNote = resolveVoiceNote("tanker", $("tankerVoiceNotePreview"), $("tankerVoiceNoteAudio"));
+  if(voiceNote.changed) payload.voiceNote = voiceNote.value;
+
+  const editId = $("tankerSaveBtn").dataset.editId;
+  let savedRecord;
+  if(editId){
+    const index = records.findIndex(r => r.id === editId);
+    if(index >= 0){
+      records[index] = { ...records[index], ...payload, id: editId };
+      savedRecord = records[index];
+    }
+  } else {
+    savedRecord = {id:Date.now().toString(36), ...payload};
+    records.push(savedRecord);
+  }
+
+  saveRecords(records);
+  if(!profile.farmers.includes(values.name)){ profile.farmers.push(values.name); saveProfile(profile); }
+  rememberFarmerRate(values.name, "tanker", values.rate);
+  appendActivityLog(editId ? "டேங்கர் பதிவு மாற்றப்பட்டது" : "டேங்கர் பதிவு சேமிக்கப்பட்டது", `${values.name} · ${fmtMoney(values.amount)}`);
+  $("tankerSaveBtn").disabled=true;
+  $("tankerStatus").textContent=editId ? "மாற்றம் சேமிக்கப்பட்டது" : "பதிவு சேமிக்கப்பட்டது";
+  $("tankerPdfNote").textContent="பில் PDF தயாராகிறது...";
+  showToast(editId ? "டேங்கர் மாற்றம் சேமிக்கப்பட்டது" : "டேங்கர் பதிவு சேமிக்கப்பட்டது");
+  delete $("tankerSaveBtn").dataset.editId;
+  $("tankerSaveBtn").textContent = "பில் உருவாக்கி சேமி";
+  renderHistory(); renderSummary(); renderProfile();
+  await generateAndSaveBill(savedRecord);
+  $("tankerSaveBtn").disabled=false;
+});
+
+// ---- trailer load entry ----
+$("trailerDate").value = localDateValue(new Date());
+
+function getTrailerEntry(){
+  const rate = parseFloat($("trailerRate").value);
+  const trailerCount = Number($("trailerCount").value);
+  const name = $("trailerName").value.trim();
+  const date = $("trailerDate").value;
+  if(!rate || rate<=0) return {error:"ஒரு டிரெய்லர் லோடுக்கான விலையை உள்ளிடவும்"};
+  if(!Number.isInteger(trailerCount) || trailerCount<1) return {error:"டிரெய்லர் லோடு எண்ணிக்கையை சரியாக உள்ளிடவும்"};
+  if(!name) return {error:"முதலில் விவசாயி / வயல் பெயரை உள்ளிடவும்"};
+  if(!date) return {error:"தேதியை உள்ளிடவும்"};
+  return {rate,trailerCount,name,date,amount:rate*trailerCount};
+}
+
+function updateTrailerCalculation(){
+  const values = getTrailerEntry();
+  $("trailerQuantity").textContent = Number.isInteger(values.trailerCount) && values.trailerCount>0 ? values.trailerCount : "0";
+  $("trailerAmount").textContent = fmtMoney(values.amount || 0);
+}
+["trailerRate","trailerCount","trailerName","trailerDate"].forEach(id=>
+  $(id).addEventListener("input", updateTrailerCalculation)
+);
+
+$("trailerSaveBtn").addEventListener("click", async () => {
+  const values = getTrailerEntry();
+  if(values.error){ $("trailerStatus").textContent=values.error; return; }
+  const dateTime = new Date(`${values.date}T12:00:00`);
+  const payload = {kind:"trailer", date:values.date, name:values.name,
+    rate:values.rate, trailerCount:values.trailerCount, amount:values.amount,
+    startTime:dateTime.toISOString(), stopTime:dateTime.toISOString(), durationMs:0, serviceCategory:"டிரெய்லர் லோடு"};
+  const trailerPayment = getEntryPayment("view-trailer");
+  applyPaymentState(payload, trailerPayment.state, trailerPayment.amountPaid);
+  const voiceNote = resolveVoiceNote("trailer", $("trailerVoiceNotePreview"), $("trailerVoiceNoteAudio"));
+  if(voiceNote.changed) payload.voiceNote = voiceNote.value;
+
+  const editId = $("trailerSaveBtn").dataset.editId;
+  let savedRecord;
+  if(editId){
+    const index = records.findIndex(r => r.id === editId);
+    if(index >= 0){
+      records[index] = { ...records[index], ...payload, id: editId };
+      savedRecord = records[index];
+    }
+  } else {
+    savedRecord = {id:Date.now().toString(36), ...payload};
+    records.push(savedRecord);
+  }
+
+  saveRecords(records);
+  if(!profile.farmers.includes(values.name)){ profile.farmers.push(values.name); saveProfile(profile); }
+  rememberFarmerRate(values.name, "trailer", values.rate);
+  appendActivityLog(editId ? "டிரெய்லர் பதிவு மாற்றப்பட்டது" : "டிரெய்லர் பதிவு சேமிக்கப்பட்டது", `${values.name} · ${fmtMoney(values.amount)}`);
+  $("trailerSaveBtn").disabled=true;
+  $("trailerStatus").textContent=editId ? "மாற்றம் சேமிக்கப்பட்டது" : "பதிவு சேமிக்கப்பட்டது";
+  $("trailerPdfNote").textContent="பில் PDF தயாராகிறது...";
+  showToast(editId ? "டிரெய்லர் மாற்றம் சேமிக்கப்பட்டது" : "டிரெய்லர் பதிவு சேமிக்கப்பட்டது");
+  delete $("trailerSaveBtn").dataset.editId;
+  $("trailerSaveBtn").textContent = "பில் உருவாக்கி சேமி";
+  renderHistory(); renderSummary(); renderProfile();
+  await generateAndSaveBill(savedRecord);
+  $("trailerSaveBtn").disabled=false;
+});
+
+// ---- diesel refill tracking ----
+$("dieselDate").value = localDateValue(new Date());
+
+function getDieselEntry(){
+  const rate = parseFloat($("dieselRate").value);
+  const date = $("dieselDate").value;
+  if(!rate || rate<=0) return {error:"டீசல் செலவு தொகையை உள்ளிடவும்"};
+  if(!date) return {error:"தேதியை உள்ளிடவும்"};
+  return {rate,date,amount:rate};
+}
+
+function updateDieselAmount(){
+  const rate = parseFloat($("dieselRate").value)||0;
+  $("dieselAmount").textContent = fmtMoney(rate>0 ? rate : 0);
+}
+["dieselRate"].forEach(id=>$(id).addEventListener("input", updateDieselAmount));
+
+$("dieselSaveBtn").addEventListener("click", () => {
+  const values = getDieselEntry();
+  if(values.error){ $("dieselStatus").textContent=values.error; return; }
+  const payload = {kind:"diesel", date:values.date,
+    name:"டீசல் நிரப்பு", rate:values.rate, amount:values.amount};
+  const dieselPayment = getEntryPayment("view-diesel");
+  applyPaymentState(payload, dieselPayment.state, dieselPayment.amountPaid);
+
+  const editId = $("dieselSaveBtn").dataset.editId;
+  if(editId){
+    const index = records.findIndex(r => r.id === editId);
+    if(index >= 0){
+      records[index] = { ...records[index], ...payload, id: editId };
+    }
+  } else {
+    records.push({id:Date.now().toString(36), ...payload});
+  }
+
+  saveRecords(records);
+  appendActivityLog(editId ? "டீசல் பதிவு மாற்றப்பட்டது" : "டீசல் பதிவு சேமிக்கப்பட்டது", `${fmtMoney(values.amount)}`);
+  $("dieselStatus").textContent=editId ? "டீசல் மாற்றம் சேமிக்கப்பட்டது" : "டீசல் பதிவு சேமிக்கப்பட்டது";
+  showToast(editId ? "டீசல் மாற்றம் சேமிக்கப்பட்டது" : "டீசல் பதிவு சேமிக்கப்பட்டது");
+  delete $("dieselSaveBtn").dataset.editId;
+  $("dieselSaveBtn").textContent = "பதிவைச் சேமி";
+  renderHistory(); renderSummary(); renderProfile();
+});
+
+// ---- start/stop ----
+if(profile.defRate) $("rate").value = profile.defRate;
+$("name").addEventListener("change", ()=>applyKnownFarmerRate($("name").value.trim(), "home", "rate"));
+
+$("startBtn").addEventListener("click", () => {
+  const rate = parseFloat($("rate").value);
+  const name = $("name").value.trim();
+  if(!rate || rate<=0){ alert("முதலில் மணிநேர கூலியை உள்ளிடவும்"); return; }
+  if(!name){ alert("முதலில் பெயரை உள்ளிடவும் அல்லது பேசவும்"); return; }
+  $("startBtn").disabled=true; $("stopBtn").disabled=false;
+  $("rate").disabled=true; $("name").disabled=true; micBtn.disabled=true;
+  $("resultBox").style.display="none";
+  $("statusLine").textContent="இயங்குகிறது...";
+  showToast("வேலை தொடங்கியது");
+  entry.timerInterval = setInterval(()=>{ $("timerDisplay").textContent = fmtDuration(Date.now()-entry.startTime.getTime()); },1000);
+});
+
+$("stopBtn").addEventListener("click", async () => {
+  if(!entry.startTime) return;
+  clearInterval(entry.timerInterval);
+  const stopTime = new Date();
+  const durationMs = stopTime.getTime()-entry.startTime.getTime();
+  const rate = parseFloat($("rate").value);
+  const name = $("name").value.trim();
+  const amount = rate*(durationMs/3600000);
+  const record = {id:Date.now().toString(36), date:dateKey(entry.startTime), name, rate, amount,
+    startTime:entry.startTime.toISOString(), stopTime:stopTime.toISOString(), durationMs, serviceCategory:"உழவு"};
+  applyPaymentState(record, "unpaid");
+  const voiceNote = resolveVoiceNote("home", $("voiceNotePreview"), $("voiceNoteAudio"));
+  if(voiceNote.changed) record.voiceNote = voiceNote.value;
+
+  $("stopBtn").disabled=true;
+  $("timerDisplay").textContent = fmtDuration(durationMs);
+  $("statusLine").textContent="நிறுத்தப்பட்டது";
+  $("rName").textContent=name; $("rStart").textContent=fmtTime(entry.startTime); $("rStop").textContent=fmtTime(stopTime);
+  $("rDur").textContent=fmtDuration(durationMs); $("rCategory").textContent="உழவு"; $("rRate").textContent=fmtMoney(rate)+"/மணி"; $("rAmount").textContent=fmtMoney(amount);
+  $("resultBox").style.display="block"; $("nextBtn").style.display="block";
+  setResultToggleActive("unpaid");
+  $("resultPartialRow").classList.remove("show"); $("resultPartialAmount").value="";
+  $("pdfNote").textContent="பில் PDF தயாராகிறது...";
+  showToast("வேலை நிறுத்தப்பட்டது · பில் தயார்");
+
+  records.push(record); saveRecords(records);
+  const currentRecordId = record.id;
+  $("markPaidBtn").onclick = () => { $("resultPartialRow").classList.remove("show"); setPaymentStatus(currentRecordId, "paid"); };
+  $("markPartialBtn").onclick = () => { $("resultPartialRow").classList.add("show"); setResultToggleActive("partial"); $("resultPartialAmount").focus(); };
+  $("markUnpaidBtn").onclick = () => { $("resultPartialRow").classList.remove("show"); setPaymentStatus(currentRecordId, "unpaid"); };
+  $("resultPartialAmount").oninput = () => { setPaymentStatus(currentRecordId, "partial", parseFloat($("resultPartialAmount").value)); };
+  if(!profile.farmers.includes(name)){ profile.farmers.push(name); saveProfile(profile); }
+  rememberFarmerRate(name, "home", rate);
+  renderQuickFarmers();
+  renderTodaySummary();
+  await generateAndSaveBill(record);
+  renderHistory();
+});
+
+function setResultToggleActive(state){
+  $("markPaidBtn").classList.toggle("active", state==="paid");
+  $("markPartialBtn").classList.toggle("active", state==="partial");
+  $("markUnpaidBtn").classList.toggle("active", state==="unpaid");
+}
+function setPaymentStatus(id, state, amountPaidInput){
+  const r = records.find(x=>x.id===id);
+  if(!r) return;
+  applyPaymentState(r, state, amountPaidInput);
+  saveRecords(records);
+  const finalState = getPaymentState(r);
+  const label = finalState==="paid" ? "முழுவதும் செலுத்தப்பட்டது" : finalState==="partial" ? "பாகுதி பணம் பெறப்பட்டது" : "பணம் நிலுவை";
+  appendActivityLog(label, `${r.name} · பெற்றது ${fmtMoney(getPaidAmount(r))} / ${fmtMoney(r.amount)}`);
+  setResultToggleActive(finalState);
+  renderHistory(); renderSummary(); renderTodaySummary();
+}
+
+$("nextBtn").addEventListener("click", () => {
+  entry = {startTime:null, timerInterval:null};
+  $("startBtn").disabled=false; $("stopBtn").disabled=true;
+  $("rate").disabled=false; $("name").disabled=false; $("name").value="";
+  micBtn.disabled = false;
+  clearVoiceNote("home", $("voiceNotePreview"), $("voiceNoteAudio"));
+  delete pendingVoiceNotes.home;
+  $("timerDisplay").textContent="00:00:00"; $("statusLine").textContent="தொடங்க தயார்";
+  $("resultBox").style.display="none"; $("nextBtn").style.display="none";
+});
+
+// ---- bill / PDF ----
+async function generateAndSaveBill(record){
+  if(record.kind === "diesel" || record.kind === "diesel-rate") return;
+  const pdfNoteId = record.manual ? "manualPdfNote" : record.kind === "tanker" ? "tankerPdfNote" : record.kind === "trailer" ? "trailerPdfNote" : "pdfNote";
+  const pdfNote = $(pdfNoteId);
+  const serviceType = ["tanker","trailer"].includes(record.kind) ? record.kind : null;
+  const isTanker = serviceType === "tanker";
+  const isTrailer = serviceType === "trailer";
+  $("tBillId").textContent = record.id.toUpperCase();
+  $("tDate").textContent = new Date(`${record.date}T12:00:00`).toLocaleDateString('ta-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  $("tCustomerLabel").textContent = "விவசாயி / வயல் பெயர்";
+  $("tBillCaption").textContent = "வேலை நேரம் மற்றும் கூலி ரசீது";
+  $("tBillSectionTitle").textContent = "வேலை விவரம்";
+  $("tAmountLabel").textContent = "மொத்தக் கூலி";
+  $("tName").textContent = record.name;
+  $("tStartRow").style.display = serviceType ? "none" : "grid";
+  $("tStopRow").style.display = serviceType ? "none" : "grid";
+  $("tDurRow").style.display = serviceType ? "none" : "grid";
+  $("tServiceCountRow").style.display = serviceType ? "grid" : "none";
+  $("tFuelNoteRow").style.display = "none";
+  if(!serviceType){
+    $("tStart").textContent = fmtTime(new Date(record.startTime));
+    $("tStop").textContent = fmtTime(new Date(record.stopTime));
+    $("tDur").textContent = fmtDuration(record.durationMs);
+  }else{
+    $("tServiceCountLabel").textContent = isTrailer ? "டிரெய்லர் லோடு எண்ணிக்கை" : "டேங்கர் எண்ணிக்கை";
+    $("tServiceCount").textContent = isTrailer ? record.trailerCount : record.tankCount;
+  }
+  $("tServiceCategory").textContent = getServiceCategory(record) || "-";
+  $("tRateLabel").textContent = isTanker ? "ஒரு டேங்கர் விலை" : isTrailer ? "ஒரு டிரெய்லர் லோடு விலை" : "மணிக்கு கூலி";
+  $("tRate").textContent = fmtMoney(record.rate)+(serviceType ? (isTanker ? "/டேங்கர்" : "/லோடு") : "/மணி");
+  const paymentState = getPaymentState(record);
+  $("tStatus").textContent = paymentState==="paid" ? "முழுவதும் செலுத்தப்பட்டது" : paymentState==="partial" ? `பாகுதி · பெற்றது ${fmtMoney(getPaidAmount(record))}` : "பாக்கி உள்ளது";
+  $("tStatus").className = `bill-status ${paymentState}`;
+  $("tBalanceDueRow").style.display = paymentState==="partial" ? "grid" : "none";
+  if(paymentState==="partial") $("tBalanceDue").textContent = fmtMoney(getBalanceDue(record));
+  $("tAmount").textContent = fmtMoney(record.amount);
+  try{
+    const canvas = await html2canvas(document.getElementById("billTemplate"), {scale:2, backgroundColor:"#ffffff"});
+    const imgData = canvas.toDataURL("image/png");
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({unit:"pt", format:[canvas.width/2+40, canvas.height/2+40]});
+    pdf.addImage(imgData,"PNG",20,20,canvas.width/2,canvas.height/2);
+    const blob = pdf.output("blob");
+    const safeName = record.name.replace(/[^\p{L}\p{M}\p{N}-]+/gu,"_").replace(/^_+|_+$/g,"") || "customer";
+    const filename = `neethi_bill_${record.date}_${safeName}.pdf`;
+    try{
+      saveBlobAsFile(blob, filename);
+      pdfNote.innerHTML = `பில் PDF உங்கள் சாதனத்தில் சேமிக்கப்பட்டது.<br><button type="button" class="share-whatsapp-btn" onclick="shareBillOnWhatsApp('${record.id}')">💬 WhatsApp-ல் பகிர்</button>`;
+    }
+    catch(err){ pdfNote.textContent="PDF-ஐ தானாக சேமிக்க முடியவில்லை."; }
+  }catch(e){ pdfNote.textContent="பில் படத்தை உருவாக்க முடியவில்லை."; }
+}
+async function redownload(id){ const r=records.find(x=>x.id===id); if(r) await generateAndSaveBill(r); }
+window.redownload = redownload;
+// plain-text bill summary for the WhatsApp contact-picker link (can't attach the PDF file there)
+function buildBillShareText(record){
+  const paymentState = getPaymentState(record);
+  const statusLine = paymentState==="paid" ? "✅ முழுவதும் செலுத்தப்பட்டது"
+    : paymentState==="partial" ? `➗ பாகுதி · பெற்றது ${fmtMoney(getPaidAmount(record))} · மீதி பாக்கி ${fmtMoney(getBalanceDue(record))}`
+    : `❌ பாக்கி உள்ளது · ${fmtMoney(getBalanceDue(record))}`;
+  const dateLabel = new Date(`${record.date}T12:00:00`).toLocaleDateString('ta-IN',{day:'2-digit',month:'long',year:'numeric'});
+  const lines = [
+    "🚜 நீதி டிராக்டர் சேவைகள்",
+    `ரசீது எண்: ${record.id.toUpperCase()}`,
+    `பெயர்: ${record.name}`,
+    `தேதி: ${dateLabel}`,
+    `சேவை: ${getServiceCategory(record) || "-"}`,
+    `மொத்தத் தொகை: ${fmtMoney(record.amount)}`,
+    `நிலை: ${statusLine}`,
+    "",
+    "தொடர்பு: 8056938635 · மொச்சியேந்தல்"
+  ];
+  return lines.join("\n");
+}
+function shareBillOnWhatsApp(id){
+  const record = records.find(x=>x.id===id);
+  if(!record) return;
+  window.open(`https://wa.me/?text=${encodeURIComponent(buildBillShareText(record))}`, "_blank");
+}
+window.shareBillOnWhatsApp = shareBillOnWhatsApp;
+function updatePaymentAmount(id){
+  const r = records.find(x=>x.id===id);
+  if(!r) return;
+  const total = Number(r.amount)||0;
+  const current = getPaidAmount(r);
+  const input = prompt(`"${r.name}" · மொத்தத் தொகை ${fmtMoney(total)}\nஇதுவரை பெற்ற தொகையை உள்ளிடவும் (முழுவதும் பெற்றால் ${total.toFixed(2)}, பெறவில்லை என்றால் 0):`, current.toFixed(2));
+  if(input === null) return;
+  let amt = parseFloat(input);
+  if(!Number.isFinite(amt)) amt = 0;
+  amt = Math.max(0, Math.min(amt, total));
+  const state = amt<=0 ? "unpaid" : amt>=total && total>0 ? "paid" : "partial";
+  applyPaymentState(r, state, amt);
+  saveRecords(records);
+  const finalState = getPaymentState(r);
+  const label = finalState==="paid" ? "முழுவதும் செலுத்தப்பட்டது" : finalState==="partial" ? "பாகுதி பணம் பெறப்பட்டது" : "பணம் நிலுவை";
+  appendActivityLog(label, `${r.name} · பெற்றது ${fmtMoney(getPaidAmount(r))} / ${fmtMoney(total)}`);
+  renderHistory(); renderSummary(); renderTodaySummary();
+}
+window.updatePaymentAmount = updatePaymentAmount;
+
+function exportRecordsJson(){
+  return JSON.stringify({
+    format: "tractor-full-export",
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    app: "tractor-calculator",
+    profile: {
+      defRate: profile.defRate ?? null,
+      farmers: Array.isArray(profile.farmers) ? profile.farmers : []
+    },
+    records,
+    deletedRecords
+  }, null, 2);
+}
+
+function normalizeImportedProfile(rawProfile){
+  const fallback = { defRate: null, farmers: [], farmerRates: {} };
+  if(!rawProfile || typeof rawProfile !== "object") return fallback;
+
+  const nextProfile = { ...fallback };
+  if(typeof rawProfile.defRate === "number" && Number.isFinite(rawProfile.defRate)) nextProfile.defRate = rawProfile.defRate;
+  if(Array.isArray(rawProfile.farmers)) nextProfile.farmers = rawProfile.farmers.filter(name => typeof name === "string" && name.trim()).map(name => name.trim());
+  if(rawProfile.farmerRates && typeof rawProfile.farmerRates === "object" && !Array.isArray(rawProfile.farmerRates)){
+    Object.entries(rawProfile.farmerRates).forEach(([name, rates])=>{
+      if(typeof name !== "string" || !name.trim() || !rates || typeof rates !== "object") return;
+      const clean = {};
+      Object.entries(rates).forEach(([form, rate])=>{ if(Number.isFinite(rate)) clean[form] = rate; });
+      if(Object.keys(clean).length) nextProfile.farmerRates[name.trim()] = clean;
+    });
+  }
+  return nextProfile;
+}
+
+function importRecordsJson(jsonText){
+  let parsed;
+  try { parsed = JSON.parse(jsonText); } catch (e) { throw new Error("இந்த JSON கோப்பு சரியாக இருப்பதாகத் தெரியவில்லை."); }
+
+  const rawRecords = Array.isArray(parsed) ? parsed : parsed && Array.isArray(parsed.records) ? parsed.records : null;
+  const rawDeletedRecords = parsed && typeof parsed === "object" && !Array.isArray(parsed) && Array.isArray(parsed.deletedRecords) ? parsed.deletedRecords : [];
+  const rawProfile = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed.profile : null;
+  if(!rawRecords) throw new Error("இந்த JSON கோப்பில் பதிவுகள் பட்டியல் இல்லை.");
+
+  const importedProfile = normalizeImportedProfile(rawProfile || (parsed && Array.isArray(parsed.farmers) ? { farmers: parsed.farmers } : null));
+  if(importedProfile.defRate !== null) profile.defRate = importedProfile.defRate;
+  profile.farmers = Array.from(new Set([...(profile.farmers || []), ...importedProfile.farmers]));
+  if(!profile.farmerRates || typeof profile.farmerRates !== "object") profile.farmerRates = {};
+  Object.entries(importedProfile.farmerRates).forEach(([name, rates])=>{
+    profile.farmerRates[name] = { ...(profile.farmerRates[name]||{}), ...rates };
+  });
+
+  const existingIds = new Set(records.map(record => String(record.id)));
+  let added = 0;
+  let skipped = 0;
+
+  rawRecords.forEach(record => {
+    const validDate = record && typeof record.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(record.date)
+      && !Number.isNaN(new Date(`${record.date}T12:00:00`).getTime());
+    if(!record || typeof record !== "object" || Array.isArray(record)
+      || typeof record.id !== "string" || !record.id.trim()
+      || typeof record.name !== "string" || !validDate){
+      skipped += 1;
+      return;
+    }
+    if(existingIds.has(record.id)){
+      skipped += 1;
+      return;
+    }
+    existingIds.add(record.id);
+    records.push({ ...record });
+    const category = getServiceCategory(record);
+    if(category && record.name && !profile.farmers.includes(record.name)) profile.farmers.push(record.name);
+    added += 1;
+  });
+
+  const existingDeletedIds = new Set(deletedRecords.map(record => String(record.id)));
+  let trashAdded = 0;
+  rawDeletedRecords.forEach(record => {
+    if(!record || typeof record !== "object" || Array.isArray(record) || typeof record.id !== "string" || !record.id.trim()) return;
+    if(existingDeletedIds.has(record.id)) return;
+    existingDeletedIds.add(record.id);
+    deletedRecords.push({ ...record });
+    trashAdded += 1;
+  });
+  if(trashAdded) saveDeletedRecords(deletedRecords);
+
+  if(added || trashAdded || importedProfile.defRate !== null || importedProfile.farmers.length){
+    saveRecords(records);
+    saveProfile(profile);
+    appendActivityLog("JSON இறக்குமதி", `${added} பதிவுகள் · ${trashAdded} காப்பக பதிவுகள் சேர்க்கப்பட்டன · ${skipped} தவிர்க்கப்பட்டன`);
+    renderHistory();
+    renderSummary();
+    renderProfile();
+    renderArchive();
+  }
+
+  return {
+    added,
+    skipped,
+    trashAdded,
+    totalRecordsAfterImport: records.length
+  };
+}
+
+const BACKUP_REMINDER_MS = 7 * 24 * 60 * 60 * 1000;
+function renderBackupStatus(){
+  const host = $("backupStatusText");
+  if(!host) return;
+  if(!profile.lastBackupAt){
+    host.innerHTML = records.length ? '⚠ இதுவரை பேக்அப் எடுக்கப்படவில்லை — "பகிர்வு" பொத்தானை அழுத்தி JSON பேக்அப் எடுக்கவும்.' : "";
+    return;
+  }
+  const daysSince = Math.floor((Date.now() - profile.lastBackupAt) / (24*60*60*1000));
+  const dateLabel = new Date(profile.lastBackupAt).toLocaleDateString('ta-IN',{day:'2-digit',month:'short',year:'numeric'});
+  host.innerHTML = daysSince * (24*60*60*1000) > BACKUP_REMINDER_MS
+    ? `⚠ கடைசி பேக்அப்: ${dateLabel} (${daysSince} நாட்களுக்கு முன்பு) — புதிய பேக்அப் எடுக்கவும்.`
+    : `✔ கடைசி பேக்அப்: ${dateLabel} (${daysSince} நாட்களுக்கு முன்பு)`;
+}
+// once-per-day nudge — this app has no cloud sync, so an exported JSON file is the only way to avoid data loss
+function checkBackupReminder(){
+  if(!records.length) return;
+  const overdue = !profile.lastBackupAt || (Date.now() - profile.lastBackupAt) > BACKUP_REMINDER_MS;
+  if(!overdue) return;
+  const today = localDateValue(new Date());
+  if(localStorage.getItem("lastBackupNagDate") === today) return;
+  showToast("⚠ பல நாட்களாக பேக்அப் எடுக்கப்படவில்லை — பதிவுகள் பக்கத்தில் JSON பேக்அப் எடுக்கவும்", 4000);
+  localStorage.setItem("lastBackupNagDate", today);
+}
+
+$("exportRecordsBtn").addEventListener("click", ()=>{
+  const data = exportRecordsJson();
+  const blob = new Blob([data], {type:"application/json;charset=utf-8"});
+  saveBlobAsFile(blob, `tractor_full_backup_${dateKey(new Date())}.json`);
+  profile.lastBackupAt = Date.now();
+  saveProfile(profile);
+  appendActivityLog("JSON பதிவிறக்கம்", `${records.length} பதிவுகள் ஏற்றுமதி செய்யப்பட்டன`);
+  showToast("JSON கோப்பு சேமிக்கப்பட்டது");
+  $("recordsTransferStatus").textContent = `பதிவுகள் + அமைப்புகள் JSON ஆக ஏற்றுமதி செய்யப்பட்டன. மொத்தம் ${records.length} பதிவுகள்.`;
+  renderBackupStatus();
+});
+
+$("importRecordsBtn").addEventListener("click", ()=>$("importRecordsFile").click());
+$("importRecordsFile").addEventListener("change", async event=>{
+  const file = event.target.files[0];
+  if(!file) return;
+  try{
+    const result = importRecordsJson(await file.text());
+    $("recordsTransferStatus").textContent = `${result.added} பதிவுகள் + ${result.trashAdded} காப்பக பதிவுகள் சேர்க்கப்பட்டன; ${result.skipped} பதிவுகள் தடுக்கப்பட்டன. மொத்த பதிவுகள்: ${result.totalRecordsAfterImport}.`;
+  }catch(error){
+    $("recordsTransferStatus").textContent = error.message || "JSON கோப்பை இறக்குமதி செய்ய முடியவில்லை.";
+  }finally{
+    event.target.value = "";
+  }
+});
+
+function csvEscape(value){
+  const str = String(value ?? "");
+  if(/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+  return str;
+}
+function exportRecordsCsv(){
+  const header = ["தேதி","பெயர்","வகை","தொகை","செலுத்தப்பட்டது","பாக்கி","நிலை"];
+  const rows = records.slice().sort((a,b)=> a.date.localeCompare(b.date)).map(r=>{
+    const state = getPaymentState(r);
+    const stateLabel = state === "paid" ? "செலுத்தியது" : state === "partial" ? "பாகுதி" : "பாக்கி";
+    const category = getServiceCategory(r) || (r.kind === "diesel" ? "டீசல்" : r.kind === "diesel-rate" ? "டீசல் விலை" : "-");
+    return [r.date, r.name || "-", category, r.amount || 0, getPaidAmount(r), getBalanceDue(r), stateLabel].map(csvEscape).join(",");
+  });
+  // leading BOM keeps Tamil text readable when the CSV is opened in Excel
+  return "\uFEFF" + [header.map(csvEscape).join(","), ...rows].join("\n");
+}
+$("exportCsvBtn").addEventListener("click", ()=>{
+  const csv = exportRecordsCsv();
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  saveBlobAsFile(blob, `tractor_records_${dateKey(new Date())}.csv`);
+  appendActivityLog("CSV பதிவிறக்கம்", `${records.length} பதிவுகள் CSV ஆக ஏற்றுமதி செய்யப்பட்டன`);
+  showToast("CSV கோப்பு சேமிக்கப்பட்டது");
+});
+
+$("historySearch").addEventListener("input", ()=>{
+  historyFilter.query = $("historySearch").value;
+  renderHistory();
+});
+document.querySelectorAll(".history-range").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    historyFilter.range = btn.dataset.range;
+    document.querySelectorAll(".history-range").forEach(b=>b.classList.toggle("active", b===btn));
+    renderHistory();
+  });
+});
+document.querySelectorAll(".history-status").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    historyFilter.status = btn.dataset.status;
+    document.querySelectorAll(".history-status").forEach(b=>b.classList.toggle("active", b===btn));
+    renderHistory();
+  });
+});
+
+// ---- history ----
+function matchesHistoryFilter(record, query, range, status){
+  if(query){
+    const text = `${record.name||""} ${record.date||""} ${fmtMoney(record.amount||0)}`.toLowerCase();
+    if(!text.includes(query.trim().toLowerCase())) return false;
+  }
+  if(status && status !== "all" && record.kind !== "diesel-rate" && getPaymentState(record) !== status) return false;
+  if(range === "all") return true;
+  if(range === "today") return record.date === localDateValue(new Date());
+  const days = range === "week" ? 7 : 30;
+  const recordTime = new Date(`${record.date}T12:00:00`).getTime();
+  return Date.now() - recordTime <= days * 24 * 60 * 60 * 1000;
+}
+function renderHistory(){
+  const host = $("history");
+  renderBackupStatus();
+  if(records.length===0){ host.innerHTML='<div class="empty">இன்னும் பதிவுகள் இல்லை. ஒரு வேலையை முடித்தால் இங்கே தெரியும்.</div>'; return; }
+  const filtered = records.filter(r => matchesHistoryFilter(r, historyFilter.query, historyFilter.range, historyFilter.status));
+  if(filtered.length===0){ host.innerHTML='<div class="empty">தேடலுக்கு பொருந்தும் பதிவுகள் இல்லை.</div>'; return; }
+  const byDate={}; filtered.forEach(r=>{ (byDate[r.date]=byDate[r.date]||[]).push(r); });
+  const dates = Object.keys(byDate).sort().reverse();
+  let html="";
+  dates.forEach(d=>{
+    const incomeRecords = byDate[d].filter(r=>r.kind !== "diesel" && r.kind !== "diesel-rate" && Number.isFinite(Number(r.amount)));
+    const dieselRecords = byDate[d].filter(r=>r.kind === "diesel" && Number.isFinite(Number(r.amount)));
+    const dayIncome = incomeRecords.reduce((s,r)=>s+Number(r.amount),0);
+    const dayDieselSpend = dieselRecords.reduce((s,r)=>s+Number(r.amount),0);
+    const totals = `${incomeRecords.length ? ` · வேலை வரவு ${fmtMoney(dayIncome)}` : ""}${dieselRecords.length ? ` · டீசல் செலவு ${fmtMoney(dayDieselSpend)}` : ""}`;
+    html += `<div class="datehead">${new Date(`${d}T12:00:00`).toLocaleDateString('ta-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}${totals}</div>`;
+    byDate[d].slice().reverse().forEach(r=>{
+      const category = getServiceCategory(r);
+      const categoryLine = category ? `<b>சேவைகள்: ${category}</b><br>` : "";
+      const details = r.kind === "tanker"
+        ? `${r.tankCount} டேங்கர் × ${fmtMoney(r.rate)}/டேங்கர்`
+        : r.kind === "trailer"
+          ? `${r.trailerCount} டிரெய்லர் லோடு × ${fmtMoney(r.rate)}/லோடு`
+          : r.kind === "diesel-rate"
+            ? `டீசல் விலை / லிட்டர்: ${fmtMoney(r.rate)}`
+          : r.kind === "diesel"
+            ? `டீசல் செலவு ${fmtMoney(r.amount)}`
+          : `${r.manual?'கைமுறை பதிவு · ':''}${fmtTime(new Date(r.startTime))} → ${fmtTime(new Date(r.stopTime))}<br>கால அளவு: ${fmtDuration(r.durationMs)} · கூலி: ${fmtMoney(r.rate)}/மணி`;
+      const amount = r.kind === "diesel-rate" ? "" : `<span class="amt">${fmtMoney(r.amount)}</span>`;
+      const isRateOnlyRecord = r.kind === "diesel-rate";
+      const paymentState = getPaymentState(r);
+      const statusLabel = paymentState==="paid" ? "✔ முழுவதும் செலுத்தப்பட்டது"
+        : paymentState==="partial" ? `➗ பாகுதி · பெற்றது ${fmtMoney(getPaidAmount(r))} · மீதி ${fmtMoney(getBalanceDue(r))}`
+        : "✖ பாக்கி உள்ளது";
+      const paymentStatus = isRateOnlyRecord ? "" : `<span class="badge ${paymentState}" onclick="updatePaymentAmount('${r.id}')">${statusLabel}</span>`;
+      const actions = `
+        <div class="record-action-row">
+          <button class="record-action-btn edit" type="button" onclick="modifyRecord('${r.id}')"><span class="icon">✏️</span>திருத்து</button>
+          <button class="record-action-btn delete" type="button" onclick="deleteRecord('${r.id}')"><span class="icon">🗑️</span>நீக்கு</button>
+        </div>
+      `;
+      const download = r.kind === "diesel" || isRateOnlyRecord ? "" : `<button class="dl" onclick="redownload('${r.id}')">PDF மீண்டும் பதிவிறக்கு</button> <button class="dl" onclick="shareBillOnWhatsApp('${r.id}')">💬 WhatsApp</button>`;
+      const voiceNotePlayer = r.voiceNote ? `<audio controls src="${escapeHtml(r.voiceNote)}" class="rec-voice-note"></audio>` : "";
+      html += `<div class="rec"><div class="top"><span>${escapeHtml(r.name)}</span>${amount}</div>
+        <div class="meta">${categoryLine}${details}${paymentStatus ? `<br>${paymentStatus}` : ""}</div>${voiceNotePlayer}${download}${actions}</div>`;
+    });
+  });
+  host.innerHTML = html;
+}
+
+function deleteRecord(id){
+  const record = records.find(r => r.id === id);
+  if(!record) return;
+  if(!confirm(`"${record.name}" பதிவை நீக்க வேண்டுமா? (30 நாட்களுக்குள் காப்பகத்தில் இருந்து மீட்டமைக்கலாம்)`)) return;
+  records = records.filter(r => r.id !== id);
+  deletedRecords.unshift({ ...record, deletedAt: Date.now() });
+  saveRecords(records);
+  saveDeletedRecords(deletedRecords);
+  appendActivityLog("பதிவு நீக்கப்பட்டது", `${record.name} · ${fmtMoney(record.amount || 0)}`);
+  showToast("பதிவு காப்பகத்திற்கு நகர்த்தப்பட்டது");
+  renderHistory();
+  renderSummary();
+  renderProfile();
+  renderArchive();
+}
+window.deleteRecord = deleteRecord;
+
+function restoreRecord(id){
+  const record = deletedRecords.find(r => r.id === id);
+  if(!record) return;
+  deletedRecords = deletedRecords.filter(r => r.id !== id);
+  const { deletedAt, ...restored } = record;
+  records.unshift(restored);
+  saveDeletedRecords(deletedRecords);
+  saveRecords(records);
+  appendActivityLog("பதிவு மீட்டமைக்கப்பட்டது", `${record.name} · ${fmtMoney(record.amount || 0)}`);
+  showToast("பதிவு மீட்டமைக்கப்பட்டது");
+  renderArchive();
+  renderHistory();
+  renderSummary();
+  renderProfile();
+}
+window.restoreRecord = restoreRecord;
+
+function purgeDeletedRecord(id){
+  const record = deletedRecords.find(r => r.id === id);
+  if(!record) return;
+  if(!confirm(`"${record.name}" பதிவை நிரந்தரமாக நீக்க வேண்டுமா? இதை பின்னர் மீட்க முடியாது.`)) return;
+  deletedRecords = deletedRecords.filter(r => r.id !== id);
+  saveDeletedRecords(deletedRecords);
+  showToast("பதிவு நிரந்தரமாக நீக்கப்பட்டது");
+  renderArchive();
+}
+window.purgeDeletedRecord = purgeDeletedRecord;
+
+function renderArchive(){
+  const statsHost = $("archiveStats");
+  const trashHost = $("trashList");
+  if(!statsHost || !trashHost) return;
+  pruneExpiredDeletedRecords();
+  const incomeRecords = records.filter(r => r.kind !== "diesel" && r.kind !== "diesel-rate");
+  const totalIncome = incomeRecords.reduce((sum,r)=>sum+(Number(r.amount)||0),0);
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const recent7 = records.filter(r => new Date(`${r.date}T12:00:00`).getTime() >= sevenDaysAgo).length;
+  statsHost.innerHTML = `
+    <div class="statCard"><div class="label">மொத்த பதிவுகள்</div><div class="value">${records.length}</div></div>
+    <div class="statCard"><div class="label">மொத்த வேலை வரவு</div><div class="value">${fmtMoney(totalIncome)}</div></div>
+    <div class="statCard"><div class="label">கடந்த 7 நாட்கள்</div><div class="value">${recent7}</div></div>
+    <div class="statCard"><div class="label">நீக்கப்பட்டவை</div><div class="value">${deletedRecords.length}</div></div>
+  `;
+  if(deletedRecords.length === 0){
+    trashHost.innerHTML = '<div class="empty">🗑️ காப்பகம் காலியாக உள்ளது.</div>';
+    return;
+  }
+  let html = '<div class="datehead">🗑️ நீக்கப்பட்ட பதிவுகள்</div>';
+  deletedRecords.slice().sort((a,b)=>(b.deletedAt||0)-(a.deletedAt||0)).forEach(r=>{
+    const daysLeft = Math.max(0, Math.ceil((DELETE_RETENTION_MS - (Date.now()-(r.deletedAt||0))) / (24*60*60*1000)));
+    const voiceNotePlayer = r.voiceNote ? `<audio controls src="${escapeHtml(r.voiceNote)}" class="rec-voice-note"></audio>` : "";
+    html += `<div class="rec trash-rec">
+      <div class="top"><span>${escapeHtml(r.name)}</span><span class="amt">${fmtMoney(r.amount||0)}</span></div>
+      <div class="meta">${new Date(`${r.date}T12:00:00`).toLocaleDateString('ta-IN',{day:'2-digit',month:'short',year:'numeric'})} · இன்னும் ${daysLeft} நாட்களில் நிரந்தரமாக நீக்கப்படும்</div>${voiceNotePlayer}
+      <div class="record-action-row">
+        <button class="record-action-btn edit" type="button" onclick="restoreRecord('${r.id}')"><span class="icon">♻️</span>மீட்டமை</button>
+        <button class="record-action-btn delete" type="button" onclick="purgeDeletedRecord('${r.id}')"><span class="icon">🗑️</span>நிரந்தரமாக நீக்கு</button>
+      </div>
+    </div>`;
+  });
+  trashHost.innerHTML = html;
+}
+
+function modifyRecord(id){
+  const record = records.find(r => r.id === id);
+  if(!record) return;
+
+  if(record.kind === "tanker"){
+    document.querySelector('.navbtn[data-view="tanker"]').click();
+    $("tankerRate").value = record.rate || "";
+    $("tankerCount").value = record.tankCount || 1;
+    $("tankerName").value = record.name || "";
+    $("tankerDate").value = record.date || localDateValue(new Date());
+    $("tankerSaveBtn").dataset.editId = record.id;
+    $("tankerSaveBtn").textContent = "மாற்றங்களை சேமி";
+    setEntryPayment("view-tanker", record);
+    showExistingVoiceNote("tanker", $("tankerVoiceNotePreview"), $("tankerVoiceNoteAudio"), record);
+    updateTankerCalculation();
+    return;
+  }
+
+  if(record.kind === "trailer"){
+    document.querySelector('.navbtn[data-view="trailer"]').click();
+    $("trailerRate").value = record.rate || "";
+    $("trailerCount").value = record.trailerCount || 1;
+    $("trailerName").value = record.name || "";
+    $("trailerDate").value = record.date || localDateValue(new Date());
+    $("trailerSaveBtn").dataset.editId = record.id;
+    $("trailerSaveBtn").textContent = "மாற்றங்களை சேமி";
+    setEntryPayment("view-trailer", record);
+    showExistingVoiceNote("trailer", $("trailerVoiceNotePreview"), $("trailerVoiceNoteAudio"), record);
+    updateTrailerCalculation();
+    return;
+  }
+
+  if(record.kind === "diesel"){
+    document.querySelector('.navbtn[data-view="diesel"]').click();
+    $("dieselRate").value = record.rate || "";
+    $("dieselDate").value = record.date || localDateValue(new Date());
+    $("dieselSaveBtn").dataset.editId = record.id;
+    $("dieselSaveBtn").textContent = "மாற்றங்களை சேமி";
+    setEntryPayment("view-diesel", record);
+    updateDieselAmount();
+    return;
+  }
+
+  document.querySelector('.navbtn[data-view="manual"]').click();
+  $("manualRate").value = record.rate || "";
+  $("manualName").value = record.name || "";
+  $("manualDate").value = record.date || localDateValue(new Date());
+  if(record.startTime){
+    const start = new Date(record.startTime);
+    $("manualStartHour").value = start.getHours();
+    $("manualStartMinute").value = String(start.getMinutes()).padStart(2,"0");
+  }
+  if(record.stopTime){
+    const stop = new Date(record.stopTime);
+    $("manualEndHour").value = stop.getHours();
+    $("manualEndMinute").value = String(stop.getMinutes()).padStart(2,"0");
+  }
+  $("manualSaveBtn").dataset.editId = record.id;
+  $("manualSaveBtn").textContent = "மாற்றங்களை சேமி";
+  setEntryPayment("view-manual", record);
+  showExistingVoiceNote("manual", $("manualVoiceNotePreview"), $("manualVoiceNoteAudio"), record);
+  updateManualCalculation();
+}
+window.modifyRecord = modifyRecord;
+
+// ---- summary ----
+let summaryMode = "farmer";
+let duesFilterQuery = "";
+document.querySelectorAll(".summary-mode").forEach(button=>button.addEventListener("click", ()=>{
+  summaryMode = button.dataset.mode;
+  document.querySelectorAll(".summary-mode").forEach(modeButton=>modeButton.classList.toggle("active", modeButton===button));
+  $("duesSearchRow").style.display = summaryMode === "dues" ? "block" : "none";
+  renderSummary();
+}));
+$("duesSearch").addEventListener("input", ()=>{
+  duesFilterQuery = $("duesSearch").value;
+  renderDuesList();
+});
+
+function renderSummary(){
+  const host = $("summaryBox");
+  if(summaryMode === "dues"){ renderDuesList(); return; }
+  if(summaryMode === "category"){
+    const categories = ["உழவு","தண்ணீர் டேங்கர்","டிரெய்லர் லோடு"];
+    const groups = Object.fromEntries(categories.map(category=>[category,{amount:0,paidAmount:0,pendingAmount:0,count:0,durationMs:0,quantity:0}]));
+    records.forEach(record=>{
+      const category = getServiceCategory(record);
+      if(!category || !groups[category]) return;
+      const group = groups[category];
+      group.amount += Number(record.amount)||0;
+      group.paidAmount += getPaidAmount(record);
+      group.pendingAmount += getBalanceDue(record);
+      group.count += 1;
+      if(category === "தண்ணீர் டேங்கர்") group.quantity += Number(record.tankCount)||0;
+      else if(category === "டிரெய்லர் லோடு") group.quantity += Number(record.trailerCount)||0;
+      else group.durationMs += Number(record.durationMs)||0;
+    });
+    const totalAmount = categories.reduce((sum,category)=>sum+groups[category].amount,0);
+    const totalCount = categories.reduce((sum,category)=>sum+groups[category].count,0);
+    if(!totalCount){ host.innerHTML='<div class="empty">சேவை பதிவுகள் இல்லை.</div>'; return; }
+    let html = `<div class="pendingcard"><div><div class="p1">மொத்த சேவை வரவு · ${totalCount} பதிவுகள்</div><div class="p2">${fmtMoney(totalAmount)}</div></div></div>`;
+    categories.forEach(category=>{
+      const group = groups[category];
+      if(!group.count) return;
+      const quantity = category === "தண்ணீர் டேங்கர்" ? `${group.quantity} டேங்கர்` : category === "டிரெய்லர் லோடு" ? `${group.quantity} லோடு` : fmtDuration(group.durationMs);
+      const paymentTotals = `✔ ${fmtMoney(group.paidAmount)} · ✖ ${fmtMoney(group.pendingAmount)}`;
+      html += `<div class="sumrow"><div><div class="n">${category}</div><div class="s">${group.count} பதிவு(கள்) · ${quantity}<br>${paymentTotals}</div></div><div class="a">${fmtMoney(group.amount)}</div></div>`;
+    });
+    host.innerHTML = html;
+    return;
+  }
+  if(summaryMode === "diesel"){
+    const dieselRecords = records.filter(r=>r.kind === "diesel-rate" || r.kind === "diesel");
+    if(dieselRecords.length===0){ host.innerHTML='<div class="empty">டீசல் விலை பதிவுகள் இல்லை.</div>'; return; }
+    const byDate = {};
+    dieselRecords.forEach(record=>(byDate[record.date]=byDate[record.date]||[]).push(record));
+    const dates = Object.keys(byDate).sort().reverse();
+    const refillRecords = dieselRecords.filter(record=>record.kind === "diesel" && Number.isFinite(Number(record.amount)));
+    const totalSpend = refillRecords.reduce((sum,record)=>sum+Number(record.amount),0);
+    const paidSpend = refillRecords.reduce((sum,record)=>sum+getPaidAmount(record),0);
+    const pendingSpend = refillRecords.reduce((sum,record)=>sum+getBalanceDue(record),0);
+    let html = `<div class="pendingcard"><div><div class="p1">மொத்த டீசல் செலவு · ${refillRecords.length} நிரப்புகள் · ${dieselRecords.length} விலை பதிவுகள்</div><div class="p2">${refillRecords.length ? fmtMoney(totalSpend) : "செலவு பதிவு இல்லை"}</div><div class="p1">✔ செலுத்தியது ${fmtMoney(paidSpend)} · ✖ பாக்கி ${fmtMoney(pendingSpend)}</div></div></div>`;
+    dates.forEach(date=>{
+      const entries = byDate[date];
+      const label = new Date(`${date}T12:00:00`).toLocaleDateString('ta-IN',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+      const dayRefills = entries.filter(record=>record.kind === "diesel" && Number.isFinite(Number(record.amount)));
+      const daySpend = dayRefills.reduce((sum,record)=>sum+Number(record.amount),0);
+      const dayPaid = dayRefills.reduce((sum,record)=>sum+getPaidAmount(record),0);
+      const dayPending = dayRefills.reduce((sum,record)=>sum+getBalanceDue(record),0);
+      const refillDetails = dayRefills.length ? ` · செலவு ${fmtMoney(daySpend)} · ✔ ${fmtMoney(dayPaid)} · ✖ ${fmtMoney(dayPending)}` : "";
+      html += `<div class="sumrow"><div><div class="n">${label}</div><div class="s">${entries.length} பதிவுகள்${refillDetails}</div></div><div class="a">${fmtMoney(daySpend)}</div></div>`;
+    });
+    host.innerHTML = html;
+    return;
+  }
+  const summaryRecords = records.filter(r=>r.kind !== "diesel-rate");
+  if(summaryRecords.length===0){ host.innerHTML='<div class="empty">இன்னும் பதிவுகள் இல்லை.</div>'; return; }
+  const pending = summaryRecords.filter(r=>getBalanceDue(r) > 0);
+  const pendingIncome = pending.filter(r=>r.kind !== "diesel").reduce((sum,r)=>sum+getBalanceDue(r),0);
+  const pendingFuelCost = pending.filter(r=>r.kind === "diesel").reduce((sum,r)=>sum+getBalanceDue(r),0);
+  let pendingHtml = `<div class="pendingcard"><div><div class="p1">நிலுவை · ${pending.length} பதிவுகள்</div><div class="p2">வேலை வரவு ${fmtMoney(pendingIncome)}</div>${pendingFuelCost ? `<div class="p1">டீசல் செலுத்த வேண்டியது ${fmtMoney(pendingFuelCost)}</div>` : ""}</div></div>`;
+  const groups = {};
+  summaryRecords.forEach(r=>{
+    const key = summaryMode==="farmer" ? r.name : r.date;
+    if(!groups[key]) groups[key] = {amount:0, dieselSpend:0, ms:0, tanks:0, trailers:0, count:0};
+    if(r.kind === "diesel"){
+      groups[key].dieselSpend += Number(r.amount)||0;
+    }else groups[key].amount += Number(r.amount)||0;
+    if(r.kind === "tanker") groups[key].tanks += Number(r.tankCount)||0;
+    else if(r.kind === "trailer") groups[key].trailers += Number(r.trailerCount)||0;
+    else if(r.kind !== "diesel") groups[key].ms += Number(r.durationMs)||0;
+    groups[key].count += 1;
+  });
+  const keys = Object.keys(groups).sort((a,b)=> summaryMode==="date" ? (a<b?1:-1) : groups[b].amount-groups[a].amount);
+  let html="";
+  keys.forEach(k=>{
+    const g = groups[k];
+    const label = summaryMode==="date" ? new Date(`${k}T12:00:00`).toLocaleDateString('ta-IN',{weekday:'short',year:'numeric',month:'short',day:'numeric'}) : k;
+    const details = [`${g.count} பதிவு(கள்)`];
+    if(g.ms) details.push(`நேர வேலை ${fmtDuration(g.ms)}`);
+    if(g.tanks) details.push(`${g.tanks} டேங்கர்`);
+    if(g.trailers) details.push(`${g.trailers} டிரெய்லர் லோடு`);
+    const amounts = `${g.amount ? `<div>${fmtMoney(g.amount)}</div>` : ""}${g.dieselSpend ? `<small>டீசல் செலவு ${fmtMoney(g.dieselSpend)}</small>` : ""}`;
+    html += `<div class="sumrow"><div><div class="n">${escapeHtml(label)}</div><div class="s">${details.join(" · ")}</div></div><div class="a">${amounts}</div></div>`;
+  });
+  host.innerHTML = pendingHtml + html;
+}
+
+// dedicated dues ledger — every record with a positive balance due, grouped by customer name
+function daysOverdue(record){
+  const recordTime = new Date(`${record.date}T12:00:00`).getTime();
+  return Math.floor((Date.now() - recordTime) / (24 * 60 * 60 * 1000));
+}
+// once-per-day nudge on the home screen when dues have been outstanding for a while
+function checkDuesAgingAlert(){
+  const today = localDateValue(new Date());
+  if(localStorage.getItem("lastDuesAlertDate") === today) return;
+  const overdue = records.filter(r => r.kind !== "diesel-rate" && getBalanceDue(r) > 0 && daysOverdue(r) > 15);
+  if(!overdue.length) return;
+  const totalOverdue = overdue.reduce((sum,r)=>sum+getBalanceDue(r),0);
+  showToast(`⚠ ${overdue.length} பதிவுகள் 15+ நாட்களாக பாக்கி · மொத்தம் ${fmtMoney(totalOverdue)}`, 4000);
+  localStorage.setItem("lastDuesAlertDate", today);
+}
+function renderDuesList(){
+  const host = $("summaryBox");
+  let dueRecords = records.filter(r => r.kind !== "diesel-rate" && getBalanceDue(r) > 0);
+  if(dueRecords.length === 0){ host.innerHTML = '<div class="empty">🎉 நிலுவையில் பதிவுகள் இல்லை — அனைவரும் முழுவதுமாக செலுத்திவிட்டனர்.</div>'; return; }
+  if(duesFilterQuery.trim()){
+    const q = duesFilterQuery.trim().toLowerCase();
+    dueRecords = dueRecords.filter(r => (r.kind === "diesel" ? "டீசல் செலவு" : r.name || "").toLowerCase().includes(q));
+  }
+  if(dueRecords.length === 0){ host.innerHTML = '<div class="empty">தேடலுக்கு பொருந்தும் பாக்கி பதிவுகள் இல்லை.</div>'; return; }
+  const totalDue = dueRecords.reduce((sum,r)=>sum+getBalanceDue(r),0);
+  const byName = {};
+  dueRecords.forEach(r=>{
+    const key = r.kind === "diesel" ? "டீசல் செலவு" : r.name;
+    (byName[key] = byName[key] || []).push(r);
+  });
+  const names = Object.keys(byName).sort((a,b)=> byName[b].reduce((s,r)=>s+getBalanceDue(r),0) - byName[a].reduce((s,r)=>s+getBalanceDue(r),0));
+  let html = `<div class="pendingcard"><div><div class="p1">மொத்த பாக்கி · ${dueRecords.length} பதிவுகள்</div><div class="p2">${fmtMoney(totalDue)}</div></div></div>`;
+  names.forEach(name=>{
+    const recs = byName[name];
+    const nameDue = recs.reduce((s,r)=>s+getBalanceDue(r),0);
+    const rows = recs.slice().sort((a,b)=> b.date.localeCompare(a.date)).map(r=>{
+      const state = getPaymentState(r);
+      const label = state === "partial" ? `பாகுதி · பெற்றது ${fmtMoney(getPaidAmount(r))} / ${fmtMoney(r.amount)}` : `முழுவதும் பாக்கி · ${fmtMoney(r.amount)}`;
+      const dateLabel = new Date(`${r.date}T12:00:00`).toLocaleDateString('ta-IN',{day:'2-digit',month:'short'});
+      const category = getServiceCategory(r) || (r.kind==="diesel" ? "டீசல்" : "-");
+      const overdue = daysOverdue(r);
+      const overdueBadge = overdue > 15 ? `<span class="badge unpaid">⚠ ${overdue} நாட்கள் பாக்கி</span>` : "";
+      return `<div class="dues-row"><div class="dues-info"><span>${dateLabel} · ${escapeHtml(category)}${overdueBadge}</span><small>${label}</small></div><button class="record-action-btn edit" type="button" onclick="updatePaymentAmount('${r.id}')">💰 பணம் பெற்றேன்</button></div>`;
+    }).join("");
+    html += `<div class="sumrow dues-group"><div><div class="n">${escapeHtml(name)}</div><div class="s">${recs.length} பதிவு(கள்) பாக்கி</div></div><div class="a">${fmtMoney(nameDue)}</div></div><div class="dues-detail">${rows}</div>`;
+  });
+  host.innerHTML = html;
+}
+
+// ---- profile ----
+function renderQuickFarmers(){
+  const dl = $("farmerList");
+  if(!dl) return;
+  dl.innerHTML = "";
+  profile.farmers.forEach(f => {
+    const option = document.createElement("option");
+    option.value = f;
+    dl.appendChild(option);
+  });
+}
+
+function renderTodaySummary(){
+  const today = localDateValue(new Date());
+  const todayRecords = records.filter(r => r.date === today);
+  // diesel entries are an expense, not income — keep them out of the வரவு/பாக்கி totals
+  const incomeRecords = todayRecords.filter(r => r.kind !== "diesel" && r.kind !== "diesel-rate");
+  const income = incomeRecords.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+  const pending = incomeRecords.reduce((sum, r) => sum + getBalanceDue(r), 0);
+  $("todayDateLabel").textContent = new Date(`${today}T12:00:00`).toLocaleDateString('ta-IN',{day:'2-digit',month:'short'});
+  $("todayIncome").textContent = fmtMoney(income);
+  $("todayPending").textContent = fmtMoney(pending);
+  $("todayCount").textContent = todayRecords.length;
+}
+function renderProfile(){
+  $("defRate").value = profile.defRate || "";
+  $("farmerCount").textContent = profile.farmers.length;
+  const chipHost = $("farmerChipList");
+  chipHost.innerHTML = profile.farmers.length
+    ? profile.farmers.map(f => `<span class="quick-farmer-chip farmer-chip">${escapeHtml(f)}<button type="button" title="பெயர் மாற்று" onclick="renameFarmerPrompt('${escapeHtml(f)}')">✎</button><button type="button" class="remove" title="நீக்கு" onclick="removeFarmerConfirm('${escapeHtml(f)}')">✖</button></span>`).join("")
+    : '<div class="empty">இன்னும் விவசாயிகள் சேமிக்கப்படவில்லை — ஒரு வேலையை நிறுத்தும்போது பெயர்கள் தானாக சேர்க்கப்படும்.</div>';
+  $("recCount").textContent = records.length + " பதிவு(கள்)";
+  renderActivityLog();
+  renderTodaySummary();
+  renderQuickFarmers();
+}
+function renameFarmerPrompt(oldName){
+  const input = prompt(`"${oldName}" -ஐ புதிய பெயராக மாற்றவும்:`, oldName);
+  if(input === null) return;
+  const newName = input.trim();
+  if(!newName || newName === oldName) return;
+  profile.farmers = profile.farmers.filter(f => f !== oldName);
+  if(!profile.farmers.includes(newName)) profile.farmers.push(newName);
+  if(profile.farmerRates && profile.farmerRates[oldName]){
+    profile.farmerRates[newName] = { ...(profile.farmerRates[newName]||{}), ...profile.farmerRates[oldName] };
+    delete profile.farmerRates[oldName];
+  }
+  let changed = 0;
+  records.forEach(r=>{ if(r.name === oldName){ r.name = newName; changed++; } });
+  if(changed) saveRecords(records);
+  saveProfile(profile);
+  appendActivityLog("விவசாயி பெயர் மாற்றம்", `"${oldName}" → "${newName}" (${changed} பதிவுகள் புதுப்பிக்கப்பட்டன)`);
+  renderProfile(); renderHistory(); renderSummary();
+}
+window.renameFarmerPrompt = renameFarmerPrompt;
+function removeFarmerConfirm(name){
+  if(!confirm(`"${name}" -ஐ சேமிக்கப்பட்ட விவசாயிகள் பட்டியலில் இருந்து நீக்கவா? (பழைய பதிவுகள் நீங்காது)`)) return;
+  profile.farmers = profile.farmers.filter(f => f !== name);
+  if(profile.farmerRates) delete profile.farmerRates[name];
+  saveProfile(profile);
+  appendActivityLog("விவசாயி நீக்கப்பட்டார்", name);
+  renderProfile();
+}
+window.removeFarmerConfirm = removeFarmerConfirm;
+$("defRate").addEventListener("change", ()=>{
+  profile.defRate = parseFloat($("defRate").value) || null;
+  saveProfile(profile);
+  if(profile.defRate && !$("rate").value) $("rate").value = profile.defRate;
+});
+$("clearAllBtn").addEventListener("click", ()=>{
+  if(confirm("இது இந்த சாதனத்தில் சேமிக்கப்பட்ட அனைத்து பதிவுகளையும் விவசாயிகளையும் நிரந்தரமாக நீக்கும். தொடரவா?")){
+    records = []; deletedRecords = []; profile = {defRate:profile.defRate, farmers:[], logs:profile.logs || []};
+    appendActivityLog("அனைத்து பதிவுகளும் நீக்கப்பட்டது", `மொத்த பதிவு எண்ணிக்கை: ${records.length}`);
+    saveRecords(records); saveDeletedRecords(deletedRecords); saveProfile(profile);
+    showToast("அனைத்து பதிவுகளும் நீக்கப்பட்டன");
+    renderHistory(); renderSummary(); renderProfile(); renderArchive();
+  }
+});
+
+function renderActivityLog(){
+  const logHost = $("activityLog");
+  if(!logHost) return;
+  const items = Array.isArray(profile.logs) ? profile.logs.slice().reverse() : [];
+  if(!items.length){ logHost.innerHTML = '<div class="activity-item">இதுவரை எந்த நடவடிக்கையும் பதிவு செய்யப்படவில்லை.</div>'; return; }
+  logHost.innerHTML = items.map(log => `<div class="activity-item"><strong>${escapeHtml(log.action)}</strong><br>${escapeHtml(log.details || "-")}<small>${new Date(log.time).toLocaleString('ta-IN',{dateStyle:'short', timeStyle:'short'})}</small></div>`).join("");
+}
+
+renderProfile();
+checkDuesAgingAlert();
+checkBackupReminder();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+}
+</script>
+</body>
+</html>
